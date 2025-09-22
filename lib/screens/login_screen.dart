@@ -30,6 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       final token = result['access_token'];
       final role = result['role'];
+      debugPrint("Login result: $result");  // <--- check what backend returned
+      debugPrint("Saving token: $token, role: $role"); // <--- check values saved
 
       // Save token and role in provider
       final authProvider = context.read<AuthProvider>();
@@ -37,11 +39,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Navigate to dashboard
       if (!mounted) return;
-      Navigator.pushReplacement(
+      Navigator.pushReplacementNamed(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        '/dashboard'
       );
     } catch (e) {
+      if (!mounted) return;
+      debugPrint("Login error: $e"); // <--- log the error
       setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
@@ -68,9 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Navigate to dashboard
       if (!mounted) return;
-      Navigator.pushReplacement(
+      Navigator.pushReplacementNamed(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        '/dashboard',
       );
     } catch (e) {
       setState(() => error = e.toString());

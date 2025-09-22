@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'template_selection_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -9,6 +10,9 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final role = authProvider.role ?? 'driver'; // default to driver if null
+
+    debugPrint("Dashboard build: role = $role");
+
 
     return Scaffold(
       appBar: AppBar(
@@ -42,9 +46,12 @@ class _DriverDashboard extends StatelessWidget {
       children: [
         ElevatedButton(
           onPressed: () {
-            // TODO: Navigate to New Inspection screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TemplateSelectionScreen()),
+            );
           },
-          child: const Text("Start a New Inspection"),
+          child: const Text("Start New Inspection"),
         ),
         const SizedBox(height: 16),
         Expanded(

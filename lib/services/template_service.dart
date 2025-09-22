@@ -10,13 +10,9 @@ class TemplateService {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      if (decoded is List) {
-        return decoded.cast<Map<String, dynamic>>();
-      }
-      throw Exception("Unexpected response format: ${response.body}");
+      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to fetch templates: ${response.body}');
+      throw Exception('Failed to load templates: ${response.body}');
     }
   }
 }

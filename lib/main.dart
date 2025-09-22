@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'providers/auth_provider.dart';
 
 void main() {
@@ -21,7 +22,11 @@ class MyApp extends StatelessWidget {
       title: 'PreInspection',
       theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (_) => const LoginScreen(),
+        '/dashboard': (_) => const DashboardScreen(),
+      },
     );
   }
 }
