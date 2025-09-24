@@ -1,0 +1,60 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
+import 'package:flutter/material.dart';
+
+class InspectionService {
+  static Future<void> submitInspection(String token, Map<String, dynamic> data) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/submit');
+    final response = await http.post(
+      url,
+      headers: ApiConfig.headers(token: token),
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      debugPrint("Failed inspection response body: ${response.body}");
+      throw Exception('Failed to submit inspection: ${response.statusCode} ${response.body}');
+    }
+
+    // Optionally, parse response if needed:
+    final responseData = jsonDecode(response.body);
+    debugPrint("Inspection submitted successfully: $responseData");
+  }
+
+  
+
+  static Future<Map<String, dynamic>?> getLastInspection(String token, int vehicleId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}inspections/last/$vehicleId');
+
+    final response = await http.get(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else if (response.statusCode == 404) {
+      return null; // no prior inspection
+    } else {
+      throw Exception('Failed to fetch last inspection: ${response.statusCode} ${response.body}');
+    }
+  }
+
+  /// Fetches inspection history for the authenticated driver
+  static Future<List<Map<String, dynamic>>> getInspectionHistory(String token) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}inspections/history');
+
+    final response = await http.get(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item)).toList();
+    } else {
+      throw Exception('Failed to fetch inspection history: ${response.statusCode} ${response.body}');
+    }
+  }
+}
