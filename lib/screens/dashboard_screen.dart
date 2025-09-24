@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/vehicle_selection_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'template_selection_screen.dart';
@@ -10,6 +11,8 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final role = authProvider.role ?? 'driver'; // default to driver if null
+    debugPrint("Dashboard build: token=${authProvider.token}, role=${authProvider.role}");
+
 
     debugPrint("Dashboard build: role = $role");
 
@@ -48,7 +51,7 @@ class _DriverDashboard extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TemplateSelectionScreen()),
+              MaterialPageRoute(builder: (_) => const VehicleSelectionScreen()),
             );
           },
           child: const Text("Start New Inspection"),
