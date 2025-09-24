@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/vehicle_selection_screen.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/inspection_service.dart';
@@ -90,12 +91,13 @@ class _DriverDashboardState extends State<_DriverDashboard> {
                 itemCount: history.length,
                 itemBuilder: (_, index) {
                   final item = history[index];
-                  final createdAt = DateTime.parse(item['created_at']);
-                  final editable = DateTime.now().difference(createdAt).inMinutes <= 30;
+                  final createdAt = parseUtcToLocal(item['created_at']);
+                  final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
+
 
                   return ListTile(
                     title: Text('Inspection #${item['id']}'),
-                    subtitle: Text('Date: ${item['created_at']}'),
+                    subtitle: Text('Date: $formattedDate'),
                     onTap: () {
                       Navigator.push(
                         context,

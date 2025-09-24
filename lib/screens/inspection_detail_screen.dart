@@ -1,5 +1,25 @@
 import 'package:flutter/material.dart';
 import 'inspection_form_screen.dart';
+import 'package:intl/intl.dart';
+
+DateTime parseUtcToLocal(String timestamp) {
+  // Try parsing it as UTC first
+  DateTime utcTime = DateTime.tryParse(timestamp + 'Z') ?? DateTime.now().toUtc();
+
+  print("Raw timestamp from backend: $timestamp + 'Z'");
+  print("Parsed as UTC: ${utcTime.toUtc()}");
+  print("Parsed as local (before toLocal()): $utcTime");
+
+  // If the parsed time doesn't have a timezone, force it to UTC
+  if (!utcTime.isUtc) {
+    utcTime = utcTime.toUtc();
+  }
+
+  final localTime = utcTime.toLocal();
+  print("Converted to local time: $localTime");
+
+  return localTime;
+}
 
 class InspectionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> inspection;
@@ -9,19 +29,13 @@ class InspectionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final results = inspection['results'] as Map<String, dynamic>? ?? {};
-    final createdAtString = inspection['created_at'] as String? ?? '';
-    DateTime? createdAt;
 
-    try {
-      createdAt = DateTime.parse(createdAtString.replaceFirst(' ', 'T'));
-      print('Parsed createdAt: $createdAt from string: $createdAtString');
-    } catch (e) {
-      createdAt = DateTime.now();
-      print('Failed to parse createdAt from: $createdAtString, defaulting to now. Error: $e');
-    }
-
+    final createdAt = parseUtcToLocal(inspection['created_at']);
+    final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
     final editable = DateTime.now().difference(createdAt).inMinutes <= 30;
-    print('Editable flag for inspection ${inspection['id']}: $editable');
+
+    print("Editable? $editable");
+    print("Formatted date for display: $formattedDate");
 
     return Scaffold(
       appBar: AppBar(
@@ -51,7 +65,7 @@ class InspectionDetailScreen extends StatelessWidget {
           children: [
             Text('Vehicle ID: ${inspection['vehicle_id'] ?? "N/A"}'),
             Text('Template ID: ${inspection['template_id']}'),
-            Text('Date: ${inspection['created_at']}'),
+            Text('Date: $formattedDate'),
             const SizedBox(height: 16),
             const Text('Results:', style: TextStyle(fontWeight: FontWeight.bold)),
             Expanded(
@@ -59,7 +73,7 @@ class InspectionDetailScreen extends StatelessWidget {
                 children: results.entries.map((e) {
                   return ListTile(
                     title: Text('Item ${e.key}'),
-                    trailing: Text(e.value),
+                    trailing: Text(e.value.toString()),
                   );
                 }).toList(),
               ),
