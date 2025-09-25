@@ -47,4 +47,33 @@ class OrganizationService {
       throw Exception('Failed to leave organization: ${response.statusCode} ${response.body}');
     }
   }
+
+  static Future<String> getInviteCode(String token) async {
+    final response = await http.get(
+      Uri.parse("${ApiConfig.baseUrl}/organizations/code"),
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if(response.statusCode != 200){
+      throw Exception("Failed to fetch invite code: ${response.body}");
+    }
+
+    final data = jsonDecode(response.body);
+    return data["invite_code"] as String;
+  }
+
+  static Future<String> getNewCode(String token) async {
+    final response = await http.post(
+      Uri.parse("${ApiConfig.baseUrl}/organizations/code/regenerate"),
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to regenerate invite code: ${response.body}");
+    }
+
+    final data = jsonDecode(response.body);
+    return data["invite_code"];
+  }
 }
+

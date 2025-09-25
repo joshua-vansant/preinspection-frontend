@@ -3,39 +3,23 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/template_service.dart';
 
-class EditTemplateScreen extends StatefulWidget {
-  final Map<String, dynamic> template;
-
-  const EditTemplateScreen({super.key, required this.template});
+class CreateTemplateScreen extends StatefulWidget {
+  const CreateTemplateScreen({super.key});
 
   @override
-  State<EditTemplateScreen> createState() => _EditTemplateScreenState();
+  State<CreateTemplateScreen> createState() => _CreateTemplateScreenState();
 }
 
-class _EditTemplateScreenState extends State<EditTemplateScreen> {
-  late TextEditingController nameController;
-  late List<Map<String, TextEditingController>> itemsControllers;
+class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
+  final TextEditingController nameController = TextEditingController();
+  final List<Map<String, TextEditingController>> itemsControllers = [];
   bool isDefault = false;
-  bool saving = false;
+  bool creating = false;
 
   @override
   void initState() {
     super.initState();
-
-    nameController = TextEditingController(text: widget.template["name"]);
-    isDefault = widget.template["is_default"] ?? false;
-
-    final List items = widget.template["items"] ?? [];
-    itemsControllers = items
-        .map((item) => {
-              "name": TextEditingController(text: item["name"] ?? ""),
-              "question": TextEditingController(text: item["question"] ?? ""),
-            })
-        .toList();
-
-    if (itemsControllers.isEmpty) {
-      _addItem();
-    }
+    _addItem(); // start with one empty item
   }
 
   void _addItem() {
@@ -53,9 +37,8 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
     });
   }
 
-  Future<void> _saveTemplate() async {
+  Future<void> _createTemplate() async {
     final token = context.read<AuthProvider>().token!;
-    final id = widget.template["id"];
 
     final items = itemsControllers
         .map((c) => {
@@ -74,70 +57,26 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       return;
     }
 
-    setState(() => saving = true);
+    setState(() => creating = true);
 
     try {
-      await TemplateService.updateTemplate(
+      await TemplateService.createTemplate(
         token: token,
-        id: id,
         name: nameController.text.trim(),
         items: items.cast<Map<String, String>>(),
         isDefault: isDefault,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Template updated successfully")),
+        const SnackBar(content: Text("Template created successfully")),
       );
-      Navigator.pop(context, true); // return success
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating template: $e")),
+        SnackBar(content: Text("Error creating template: $e")),
       );
     } finally {
-      setState(() => saving = false);
-    }
-  }
-
-  Future<void> _deleteTemplate() async {
-    final token = context.read<AuthProvider>().token!;
-    final id = widget.template["id"];
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Template"),
-        content: const Text(
-            "Are you sure you want to delete this template? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => saving = true);
-
-    try {
-      await TemplateService.deleteTemplate(token, id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Template deleted successfully")),
-      );
-      Navigator.pop(context, true); // return success
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error deleting template: $e")),
-      );
-    } finally {
-      setState(() => saving = false);
+      setState(() => creating = false);
     }
   }
 
@@ -146,15 +85,15 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
     return SafeArea(
       child: Scaffold(
       appBar: AppBar(
-        title: const Text("Edit Template"),
+        title: const Text("Create Template"),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: saving ? null : _saveTemplate,
+            onPressed: creating ? null : _createTemplate,
           ),
         ],
       ),
-      body: saving
+      body: creating
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -193,8 +132,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: IconButton(
-                            icon:
-                                const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _removeItem(index),
                           ),
                         ),
@@ -209,13 +147,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: saving ? null : _deleteTemplate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    icon: const Icon(Icons.delete),
-                    label: const Text("Delete Template"),
+                    onPressed: creating ? null : _createTemplate,
+                    icon: const Icon(Icons.save),
+                    label: const Text("Create Template"),
                   ),
                 ],
               ),

@@ -9,6 +9,7 @@ import '../services/organization_service.dart';
 import 'inspection_detail_screen.dart';
 import '../widgets/driver_drawer_widget.dart';
 import '../widgets/admin_drawer_widget.dart';
+import '../widgets/invite_driver_widget.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -140,12 +141,7 @@ class _AdminDashboard extends StatelessWidget {
           child: const Text("Manage Templates"),
         ),
         const SizedBox(height: 12),
-        ElevatedButton(
-          onPressed: () {
-            // TODO: Navigate to Invite Drivers
-          },
-          child: const Text("Invite Drivers"),
-        ),
+        const InviteDriverWidget(),
         const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () {
