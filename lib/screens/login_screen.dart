@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../providers/auth_provider.dart';
-import 'dashboard_screen.dart';
+// import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,8 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       final token = result['access_token'];
       final role = result['role'];
-      debugPrint("Login result: $result");  // <--- check what backend returned
-      debugPrint("Saving token: $token, role: $role"); // <--- check values saved
+      // debugPrint("Login result: $result");
+      // debugPrint("Saving token: $token, role: $role");
 
       // Save token and role in provider
       final authProvider = context.read<AuthProvider>();
@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      debugPrint("Login error: $e"); // <--- log the error
+      debugPrint("Login error: $e");
       setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
@@ -66,9 +66,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = result['access_token'];
       final role = result['role'];
 
-      // Save token in provider
       final authProvider = context.read<AuthProvider>();
       authProvider.setToken(token, role);
+      authProvider.loadOrg();
 
       // Navigate to dashboard
       if (!mounted) return;
