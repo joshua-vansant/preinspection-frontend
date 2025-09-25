@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart'; 
 import 'inspection_form_screen.dart';
 import 'package:intl/intl.dart';
+import '../services/inspection_service.dart';
 
 DateTime parseUtcToLocal(String timestamp) {
-  // Try parsing it as UTC first
   DateTime utcTime = DateTime.tryParse(timestamp + 'Z') ?? DateTime.now().toUtc();
-
-  print("Raw timestamp from backend: $timestamp + 'Z'");
-  print("Parsed as UTC: ${utcTime.toUtc()}");
-  print("Parsed as local (before toLocal()): $utcTime");
-
   // If the parsed time doesn't have a timezone, force it to UTC
   if (!utcTime.isUtc) {
     utcTime = utcTime.toUtc();
   }
-
   final localTime = utcTime.toLocal();
-  print("Converted to local time: $localTime");
-
   return localTime;
 }
 
@@ -34,8 +28,8 @@ class InspectionDetailScreen extends StatelessWidget {
     final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
     final editable = DateTime.now().difference(createdAt).inMinutes <= 30;
 
-    print("Editable? $editable");
-    print("Formatted date for display: $formattedDate");
+    // print("Editable? $editable");
+    // print("Formatted date for display: $formattedDate");
 
     return Scaffold(
       appBar: AppBar(
@@ -44,18 +38,48 @@ class InspectionDetailScreen extends StatelessWidget {
           if (editable)
             IconButton(
               icon: const Icon(Icons.edit),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => InspectionFormScreen(
-                      template: inspection,
-                      editMode: true,
-                    ),
-                  ),
+              onPressed: () async {
+                final inspectionId = inspection['id'];
+                final token = context.read<AuthProvider>().token;
+
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const Center(child: CircularProgressIndicator()),
                 );
+
+                try {
+                  final fullInspection = await InspectionService.getInspectionById(inspectionId, token!);
+                  Navigator.pop(context); // Remove loading dialog
+                  final template = fullInspection['template'] as Map<String, dynamic>?;
+
+                  if (template == null || template.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Template data is missing. Cannot edit.')),
+                    );
+                    return;
+                  }
+
+                  // Pass the full inspection to the form
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => InspectionFormScreen(
+                        inspection: fullInspection,
+                        editMode: true,
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error fetching inspection: $e')),
+                  );
+                }
               },
-            ),
+            )
+
+
         ],
       ),
       body: Padding(

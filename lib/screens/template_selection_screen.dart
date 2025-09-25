@@ -59,7 +59,7 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
   final result = await Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => InspectionFormScreen(template: merged),
+      builder: (_) => InspectionFormScreen(inspection: merged),
     ),
   );
 

@@ -5,113 +5,144 @@ import '../services/inspection_service.dart';
 import 'dashboard_screen.dart';
 
 class InspectionFormScreen extends StatefulWidget {
-  final Map<String, dynamic> template;
+  final Map<String, dynamic> inspection;
   final bool editMode;
 
-  const InspectionFormScreen({super.key, required this.template, this.editMode = false});
+  const InspectionFormScreen({
+    super.key,
+    required this.inspection,
+    this.editMode = false,
+  });
 
   @override
   State<InspectionFormScreen> createState() => _InspectionFormScreenState();
 }
 
 class _InspectionFormScreenState extends State<InspectionFormScreen> {
-  late Map<String, bool> answers; // Keyed by item ID as string
+  late Map<String, bool> answers;
   final notesController = TextEditingController();
   bool isSubmitting = false;
+
+  late Map<String, dynamic> template;
+  late List<dynamic> items;
+  late Map<String, dynamic> results;
+  late String? vehicleId;
+  late String inspectionType;
 
   @override
   void initState() {
     super.initState();
-    final items = widget.template['items'] as List<dynamic>? ?? [];
+
+    // Determine if editing or new
+    if (widget.inspection.containsKey('template')) {
+      // Editing an existing inspection
+      template = widget.inspection['template'] ?? {};
+      results = widget.inspection['results'] ?? {};
+      vehicleId = widget.inspection['vehicle_id']?.toString();
+      inspectionType = widget.inspection['type'] ?? 'pre'; // fallback if missing
+      notesController.text = widget.inspection['notes'] ?? '';
+    } else {
+      // Creating a new inspection
+      template = widget.inspection;
+      results = {};
+      vehicleId = template['vehicle_id']?.toString();
+      inspectionType = 'pre'; // default type for new inspections
+    }
+
+    items = template['items'] as List<dynamic>? ?? [];
 
     // Initialize all answers to false
-    answers = {
-      for (var item in items) item['id'].toString(): false,
-    };
+    answers = {for (var item in items) item['id'].toString(): false};
 
-    // Prefill answers if editing a post-inspection
-    final inspectionType = widget.template['inspection_type'] as String? ?? 'pre';
-    final lastResults = widget.editMode
-        ? (widget.template['results'] as Map<String, dynamic>? ?? {})
-        : (widget.template['last_inspection']?['results'] as Map<String, dynamic>? ?? {});
-
-    if (inspectionType == 'post' || widget.editMode) {
-      for (int i = 0; i < items.length; i++) {
-        final key = i.toString(); // match JSON keys from API
-        if (lastResults.containsKey(key)) {
-          answers[key] = lastResults[key] == "yes";
+    // Prefill answers if editing
+    if (widget.editMode && results.isNotEmpty) {
+      for (var item in items) {
+        final idStr = item['id'].toString();
+        if (results.containsKey(idStr)) {
+          answers[idStr] = results[idStr] == "yes";
         }
       }
     }
 
-    // Prefill notes if editing
-    if (widget.editMode) {
-      notesController.text = widget.template['notes'] ?? '';
-    }
+    // print("Template items: $items");
+    // print("Prefill results: $results");
+    // print("VehicleId: $vehicleId, Type: $inspectionType");
   }
 
-  @override
-  void dispose() {
-    notesController.dispose();
-    super.dispose();
+Future<void> _submitInspection() async {
+  final template = widget.inspection.containsKey('template')
+      ? widget.inspection['template'] ?? {}
+      : widget.inspection;
+  final items = template['items'] as List<dynamic>? ?? [];
+  final authProvider = context.read<AuthProvider>();
+  final isEdit = widget.editMode && widget.inspection.containsKey('id');
+  final inspectionId = widget.inspection['id'];
+
+  // For new inspections, vehicle and type are required
+  final vehicleId = isEdit ? null : widget.inspection['vehicle_id'];
+  final inspectionType = isEdit ? null : widget.inspection['type'];
+
+  if (!isEdit && (vehicleId == null || inspectionType == null)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Missing vehicle or inspection type')),
+    );
+    return;
   }
 
-  Future<void> _submitInspection() async {
-    final items = widget.template['items'] as List<dynamic>? ?? [];
-    final authProvider = context.read<AuthProvider>();
+  final inspectionResult = {
+    "template_id": template['id'],
+    if (!isEdit) "vehicle_id": vehicleId,
+    if (!isEdit) "type": inspectionType,
+    "results": {
+      for (var item in items)
+        item['id'].toString(): answers[item['id'].toString()] == true ? "yes" : "no"
+    },
+    "notes": notesController.text.trim(),
+  };
 
-    final vehicleId = widget.template['vehicle_id'];
-    final inspectionType = widget.template['inspection_type'];
+  setState(() => isSubmitting = true);
 
-    if (vehicleId == null || inspectionType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing vehicle or inspection type')),
+  try {
+    if (isEdit) {
+      await InspectionService.updateInspection(
+        inspectionId,
+        authProvider.token!,
+        {
+          "results": inspectionResult['results'],
+          "notes": inspectionResult['notes'],
+        },
       );
-      return;
-    }
-
-    final inspectionResult = {
-      "template_id": widget.template['id'],
-      "vehicle_id": vehicleId,
-      "type": inspectionType,
-      "results": {
-        for (var item in items)
-          item['id'].toString(): answers[item['id'].toString()] == true ? "yes" : "no"
-      },
-      "notes": notesController.text.trim(),
-    };
-
-    setState(() => isSubmitting = true);
-
-    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Inspection updated")),
+      );
+    } else {
       await InspectionService.submitInspection(authProvider.token!, inspectionResult);
-
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Inspection submitted ($inspectionType)")),
       );
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    } finally {
-      if (mounted) setState(() => isSubmitting = false);
     }
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      (route) => false,
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: $e")),
+    );
+  } finally {
+    if (mounted) setState(() => isSubmitting = false);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
-    final items = widget.template['items'] as List<dynamic>? ?? [];
-
     return Scaffold(
-      appBar: AppBar(title: Text("Inspection: ${widget.template['name']}")),
+      appBar: AppBar(title: Text("Inspection: ${template['name'] ?? 'Unknown'}")),
       body: ListView.builder(
         itemCount: items.length + 1,
         itemBuilder: (_, index) {

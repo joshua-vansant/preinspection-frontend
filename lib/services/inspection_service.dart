@@ -17,12 +17,10 @@ class InspectionService {
       throw Exception('Failed to submit inspection: ${response.statusCode} ${response.body}');
     }
 
-    // Optionally, parse response if needed:
     final responseData = jsonDecode(response.body);
     debugPrint("Inspection submitted successfully: $responseData");
   }
 
-  
 
   static Future<Map<String, dynamic>?> getLastInspection(String token, int vehicleId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}inspections/last/$vehicleId');
@@ -41,7 +39,7 @@ class InspectionService {
     }
   }
 
-  /// Fetches inspection history for the authenticated driver
+
   static Future<List<Map<String, dynamic>>> getInspectionHistory(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}inspections/history');
 
@@ -57,4 +55,35 @@ class InspectionService {
       throw Exception('Failed to fetch inspection history: ${response.statusCode} ${response.body}');
     }
   }
+
+  
+  static Future<Map<String, dynamic>> getInspectionById(int id, String token) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}inspections/$id');
+
+    final response = await http.get(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to fetch inspection by ID: ${response.statusCode} ${response.body}');
+    }
+  }
+
+
+  static Future<void> updateInspection(int inspectionId, String token, Map<String, dynamic> data) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}inspections/$inspectionId');
+    final response = await http.put(
+      url,
+      headers: ApiConfig.headers(token: token),
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update inspection: ${response.statusCode} ${response.body}');
+    }
+  }
+
 }
