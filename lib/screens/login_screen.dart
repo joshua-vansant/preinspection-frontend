@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../providers/auth_provider.dart';
+import '../services/organization_service.dart';
 // import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,6 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final authProvider = context.read<AuthProvider>();
       authProvider.setToken(token, role);
 
+      final orgData = await OrganizationService.getMyOrg(token);
+      if (orgData != null) {
+        authProvider.setOrg(orgData);
+      }
+
       // Navigate to dashboard
       if (!mounted) return;
       Navigator.pushReplacementNamed(
@@ -66,9 +72,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = result['access_token'];
       final role = result['role'];
 
-      final authProvider = context.read<AuthProvider>();
+      if (token != null && role != null) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       authProvider.setToken(token, role);
-      authProvider.loadOrg();
+    }
 
       // Navigate to dashboard
       if (!mounted) return;

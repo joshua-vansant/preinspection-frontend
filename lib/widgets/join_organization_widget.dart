@@ -4,9 +4,8 @@ import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 
 class JoinOrganizationWidget extends StatefulWidget {
-  final VoidCallback onJoined;
 
-  const JoinOrganizationWidget({super.key, required this.onJoined});
+  const JoinOrganizationWidget({super.key});
 
   @override
   State<JoinOrganizationWidget> createState() => _JoinOrganizationWidgetState();
@@ -49,7 +48,6 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
                 'Joined organization successfully')),
       );
       inviteController.clear();
-      widget.onJoined(); //trigger refresh
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error joining organization: $e')),

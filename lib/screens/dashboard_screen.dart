@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/admin_templates_screen.dart';
 import 'package:frontend/screens/vehicle_selection_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,8 @@ import '../providers/auth_provider.dart';
 import '../services/inspection_service.dart';
 import '../services/organization_service.dart';
 import 'inspection_detail_screen.dart';
-import '../widgets/join_organization_widget.dart';
+import '../widgets/driver_drawer_widget.dart';
+import '../widgets/admin_drawer_widget.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -30,10 +32,8 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       drawer: role == 'driver'
-          ? _DriverDrawer(
-              onOrgChanged: () {},
-            )
-          : _AdminDrawer(),
+          ? DriverDrawerWidget()
+          : AdminDrawerWidget(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -45,96 +45,8 @@ class DashboardScreen extends StatelessWidget {
 }
 
 
-class _DriverDrawer extends StatelessWidget {
-  final VoidCallback onOrgChanged;
-  const _DriverDrawer({required this.onOrgChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text("Organization", style: TextStyle(color: Colors.white, fontSize: 20)),
-          ),
-          if(authProvider.org == null)
-          Padding(padding: const EdgeInsets.all(12.0),
-          child: JoinOrganizationWidget(onJoined: onOrgChanged),),
-
-          // Leave Organization
-          if (authProvider.org != null)
-            ListTile(
-              leading: const Icon(Icons.exit_to_app),
-              title: const Text("Leave Organization"),
-              onTap: () async {
-                final token = authProvider.token!;
-                try {
-                  await OrganizationService.leaveOrg(token);
-                  authProvider.clearOrg();
-                  if (!context.mounted) return;
-
-                  Navigator.pop(context); // close drawer
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("You left the organization")),
-                  );
-                  onOrgChanged();
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error leaving org: $e")),
-                  );
-                }
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-class _AdminDrawer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const Drawer(
-      child: Center(child: Text("Admin drawer (coming soon)")),
-    );
-  }
-}
-
-
-class _DriverDashboard extends StatefulWidget {
+class _DriverDashboard extends StatelessWidget {
   const _DriverDashboard({super.key});
-
-  @override
-  State<_DriverDashboard> createState() => _DriverDashboardState();
-}
-
-class _DriverDashboardState extends State<_DriverDashboard> {
-  late Future<List<Map<String, dynamic>>> historyFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    final authProvider = context.read<AuthProvider>();
-    final token = authProvider.token!;
-    historyFuture = InspectionService.getInspectionHistory(token);
-
-    if (authProvider.org == null) {
-      OrganizationService.getMyOrg(token).then((orgData) {
-        if (orgData != null) {
-          authProvider.setOrg(orgData);
-        }
-      }).catchError((e) {
-        debugPrint("Error fetching org info: $e");
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +66,6 @@ class _DriverDashboardState extends State<_DriverDashboard> {
         ),
         const SizedBox(height: 16),
 
-        // Show org info only if driver is in an org
         if (org != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -167,7 +78,7 @@ class _DriverDashboardState extends State<_DriverDashboard> {
         const SizedBox(height: 16),
         Expanded(
           child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: historyFuture,
+            future: InspectionService.getInspectionHistory(authProvider.token!),
             builder: (_, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -212,6 +123,7 @@ class _DriverDashboardState extends State<_DriverDashboard> {
 }
 
 
+
 class _AdminDashboard extends StatelessWidget {
   const _AdminDashboard({super.key});
 
@@ -221,8 +133,10 @@ class _AdminDashboard extends StatelessWidget {
       children: [
         ElevatedButton(
           onPressed: () {
-            // TODO: Navigate to Manage Templates
-          },
+            Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminTemplatesScreen()),
+                );          },
           child: const Text("Manage Templates"),
         ),
         const SizedBox(height: 12),
