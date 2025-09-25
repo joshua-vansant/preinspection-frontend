@@ -7,11 +7,15 @@ import 'dashboard_screen.dart';
 class InspectionFormScreen extends StatefulWidget {
   final Map<String, dynamic> inspection;
   final bool editMode;
+  final int? vehicleId;
+  final String? inspectionType;
 
   const InspectionFormScreen({
     super.key,
     required this.inspection,
     this.editMode = false,
+    this.vehicleId,
+    this.inspectionType,
   });
 
   @override
@@ -70,18 +74,18 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
   }
 
 Future<void> _submitInspection() async {
-  final template = widget.inspection.containsKey('template')
-      ? widget.inspection['template'] ?? {}
-      : widget.inspection;
-  final items = template['items'] as List<dynamic>? ?? [];
   final authProvider = context.read<AuthProvider>();
   final isEdit = widget.editMode && widget.inspection.containsKey('id');
-  final inspectionId = widget.inspection['id'];
 
-  // For new inspections, vehicle and type are required
-  final vehicleId = isEdit ? null : widget.inspection['vehicle_id'];
-  final inspectionType = isEdit ? null : widget.inspection['type'];
+  // Determine the correct vehicle ID and inspection type
+  final int? vehicleId = isEdit
+      ? widget.inspection['vehicle_id'] as int?
+      : widget.vehicleId;
+  final String? inspectionType = isEdit
+      ? widget.inspection['type'] as String?
+      : widget.inspectionType;
 
+  // For new inspections, these are required
   if (!isEdit && (vehicleId == null || inspectionType == null)) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Missing vehicle or inspection type')),
@@ -89,7 +93,8 @@ Future<void> _submitInspection() async {
     return;
   }
 
-  final inspectionResult = {
+  // Build the payload
+  final inspectionResult = <String, dynamic>{
     "template_id": template['id'],
     if (!isEdit) "vehicle_id": vehicleId,
     if (!isEdit) "type": inspectionType,
@@ -104,8 +109,9 @@ Future<void> _submitInspection() async {
 
   try {
     if (isEdit) {
+      // Update existing inspection
       await InspectionService.updateInspection(
-        inspectionId,
+        widget.inspection['id'],
         authProvider.token!,
         {
           "results": inspectionResult['results'],
@@ -116,6 +122,7 @@ Future<void> _submitInspection() async {
         const SnackBar(content: Text("Inspection updated")),
       );
     } else {
+      // Submit new inspection
       await InspectionService.submitInspection(authProvider.token!, inspectionResult);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Inspection submitted ($inspectionType)")),
@@ -137,6 +144,7 @@ Future<void> _submitInspection() async {
     if (mounted) setState(() => isSubmitting = false);
   }
 }
+
 
 
   @override

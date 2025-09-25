@@ -50,27 +50,28 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
   }
 
   void selectTemplate(Map<String, dynamic> template) async {
-  // merge vehicle and inspection metadata into the template payload
-  final merged = Map<String, dynamic>.from(template);
-  merged['vehicle_id'] = widget.vehicle['id'];
-  merged['inspection_type'] = widget.inspectionType;
-  merged['last_inspection'] = widget.lastInspection;
+    // Merge vehicle and inspection into the template
+    final merged = Map<String, dynamic>.from(template);
 
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => InspectionFormScreen(inspection: merged),
-    ),
-  );
+    // Pass the vehicle ID and inspection type via constructor
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => InspectionFormScreen(
+          inspection: merged,
+          vehicleId: widget.vehicle['id'], // required for new inspections
+          inspectionType: widget.inspectionType, // required for new inspections
+        ),
+      ),
+    );
 
-  if (result == true) {
-    // A new inspection was submitted
-    debugPrint("Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})");
-
-    // Optionally, you can pop this screen too so the Dashboard knows:
-    Navigator.pop(context, true);
+    if (result == true) {
+      // A new inspection was submitted
+      debugPrint("Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})");
+      Navigator.pop(context, true);
+    }
   }
-}
+
 
 
   @override
