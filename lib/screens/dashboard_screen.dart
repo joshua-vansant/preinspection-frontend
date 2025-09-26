@@ -12,6 +12,8 @@ import '../widgets/admin_drawer_widget.dart';
 import '../widgets/invite_driver_widget.dart';
 import '../config/api_config.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:frontend/screens/admin_inspections_screen.dart';
+
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -277,7 +279,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () {
-            // TODO: Navigate to View Inspections
+            Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminInspectionsScreen()));
           },
           child: const Text("View Inspections"),
         ),

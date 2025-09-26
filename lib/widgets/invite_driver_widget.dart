@@ -17,9 +17,7 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
   bool _copied = false;
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _fetchInviteCode() async {
@@ -30,10 +28,16 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
     }
 
     if (!mounted) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _copied = false; // reset copied state when fetching new code
+    });
 
     try {
-      final code = await OrganizationService.getInviteCode(token);
+      final code = _inviteCode == null
+          ? await OrganizationService.getInviteCode(token)
+          : await OrganizationService.getNewCode(token);
+
       if (mounted) setState(() => _inviteCode = code);
     } catch (e) {
       _showSnackBar("Error fetching code: $e");
@@ -79,10 +83,7 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
             if (_inviteCode != null) ...[
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: _copied ? Colors.green[300] : Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
