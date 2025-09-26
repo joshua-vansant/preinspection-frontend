@@ -75,5 +75,37 @@ class OrganizationService {
     final data = jsonDecode(response.body);
     return data["invite_code"];
   }
+
+static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
+  final url = Uri.parse('${ApiConfig.baseUrl}organizations/users');
+  final response = await http.get(url, headers: ApiConfig.headers(token: token));
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    final List users = data['users'] as List? ?? [];
+    return users.map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u)).toList();
+  } else {
+    throw Exception('Failed to fetch users: ${response.statusCode} ${response.body}');
+  }
+}
+
+
+  static Future<Map<String, dynamic>> createOrg(
+      String token, String name) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}organizations/create');
+
+    final response = await http.post(
+      url,
+      headers: ApiConfig.headers(token: token),
+      body: jsonEncode({"name": name}),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception(
+          'Failed to create organization: ${response.statusCode} ${response.body}');
+    }
+  }
 }
 

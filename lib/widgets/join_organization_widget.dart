@@ -4,7 +4,6 @@ import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 
 class JoinOrganizationWidget extends StatefulWidget {
-
   const JoinOrganizationWidget({super.key});
 
   @override
@@ -21,15 +20,22 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
     super.dispose();
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _joinOrganization() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final token = authProvider.token!;
+    final authProvider = context.read<AuthProvider>();
+    final token = authProvider.token;
     final code = inviteController.text.trim();
 
+    if (token == null) {
+      _showSnackBar('Not authenticated');
+      return;
+    }
+
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an invite code')),
-      );
+      _showSnackBar('Please enter an invite code');
       return;
     }
 
@@ -38,22 +44,16 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
     try {
       final result = await OrganizationService.joinOrg(token, code);
 
-      if (result['organization'] != null){
+      if (result['organization'] != null) {
         authProvider.setOrg(result['organization']);
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(result['message'] ??
-                'Joined organization successfully')),
-      );
+      _showSnackBar(result['message'] ?? 'Joined organization successfully');
       inviteController.clear();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error joining organization: $e')),
-      );
+      _showSnackBar('Error joining organization: $e');
     } finally {
-      setState(() => isJoining = false);
+      if (mounted) setState(() => isJoining = false);
     }
   }
 

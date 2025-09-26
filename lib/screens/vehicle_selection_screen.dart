@@ -40,16 +40,15 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
     }
   }
 
-  /// Called when user picks a vehicle.
-  /// Fetches last inspection, decides pre/post, then navigates to template screen.
   Future<void> selectVehicle(Map<String, dynamic> vehicle) async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not authenticated')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Not authenticated')));
       return;
     }
 
-    // show a blocking progress dialog while we fetch last inspection
+    // show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -58,23 +57,20 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 
     Map<String, dynamic>? lastInspection;
     try {
-      lastInspection = await InspectionService.getLastInspection(token, vehicle['id']);
+      lastInspection =
+          await InspectionService.getLastInspection(token, vehicle['id']);
     } catch (e) {
-      // log, but allow continuing — default to no previous inspection
       debugPrint('Failed to fetch last inspection: $e');
     } finally {
-      Navigator.of(context).pop(); // close progress dialog
+      Navigator.of(context).pop();
     }
 
-    // compute the opposite inspection type:
     final computedType = (lastInspection == null)
         ? 'pre'
-        : ((lastInspection['type'] == 'pre') ? 'post' : 'pre');
+        : (lastInspection['type'] == 'pre' ? 'post' : 'pre');
 
-    // set selected vehicle in provider (optional but useful)
     context.read<VehicleProvider>().selectVehicle(vehicle);
 
-    // navigate to template selection, passing vehicle + inspection metadata
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -86,7 +82,6 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +96,23 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
         itemCount: vehicles.length,
         itemBuilder: (_, index) {
           final vehicle = vehicles[index];
-          return ListTile(
-            title: Text(vehicle['number']),
-            subtitle: Text(vehicle['id']?.toString() ?? ''),
-            onTap: () => selectVehicle(vehicle),
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            child: ListTile(
+              title: Text("${vehicle['number']} (${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''})"),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Year: ${vehicle['year'] ?? '-'}"),
+                  if (vehicle['license_plate'] != null)
+                    Text("Plate: ${vehicle['license_plate']}"),
+                  if (vehicle['vin'] != null) Text("VIN: ${vehicle['vin']}"),
+                  if (vehicle['mileage'] != null) Text("Mileage: ${vehicle['mileage']}"),
+                  Text("Status: ${vehicle['status'] ?? 'unknown'}"),
+                ],
+              ),
+              onTap: () => selectVehicle(vehicle),
+            ),
           );
         },
       ),

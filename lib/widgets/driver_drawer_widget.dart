@@ -7,6 +7,10 @@ import 'join_organization_widget.dart';
 class DriverDrawerWidget extends StatelessWidget {
   const DriverDrawerWidget({super.key});
 
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
@@ -23,30 +27,31 @@ class DriverDrawerWidget extends StatelessWidget {
             ),
           ),
           if (authProvider.org == null)
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: JoinOrganizationWidget(), // no callback needed
+            const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: JoinOrganizationWidget(),
             ),
           if (authProvider.org != null)
             ListTile(
               leading: const Icon(Icons.exit_to_app),
               title: const Text("Leave Organization"),
               onTap: () async {
-                final token = authProvider.token!;
+                final token = authProvider.token;
+                if (token == null) {
+                  _showSnackBar(context, "Not authenticated");
+                  return;
+                }
+
                 try {
                   await OrganizationService.leaveOrg(token);
                   authProvider.clearOrg();
                   if (!context.mounted) return;
 
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("You left the organization")),
-                  );
+                  _showSnackBar(context, "You left the organization");
                 } catch (e) {
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error leaving org: $e")),
-                  );
+                  _showSnackBar(context, "Error leaving org: $e");
                 }
               },
             ),

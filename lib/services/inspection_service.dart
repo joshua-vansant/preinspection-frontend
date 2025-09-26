@@ -4,6 +4,7 @@ import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 
 class InspectionService {
+  /// Submit a new inspection
   static Future<void> submitInspection(String token, Map<String, dynamic> data) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/inspections/submit');
     final response = await http.post(
@@ -17,13 +18,12 @@ class InspectionService {
       throw Exception('Failed to submit inspection: ${response.statusCode} ${response.body}');
     }
 
-    final responseData = jsonDecode(response.body);
-    debugPrint("Inspection submitted successfully: $responseData");
+    debugPrint("Inspection submitted successfully: ${response.body}");
   }
 
-
+  /// Get the last inspection for a vehicle
   static Future<Map<String, dynamic>?> getLastInspection(String token, int vehicleId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}inspections/last/$vehicleId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/last/$vehicleId');
 
     final response = await http.get(
       url,
@@ -39,9 +39,9 @@ class InspectionService {
     }
   }
 
-
+  /// Get full inspection history for the logged-in user
   static Future<List<Map<String, dynamic>>> getInspectionHistory(String token) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}inspections/history');
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/history');
 
     final response = await http.get(
       url,
@@ -56,9 +56,9 @@ class InspectionService {
     }
   }
 
-  
+  /// Fetch a single inspection by ID
   static Future<Map<String, dynamic>> getInspectionById(int id, String token) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}inspections/$id');
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/$id');
 
     final response = await http.get(
       url,
@@ -72,9 +72,9 @@ class InspectionService {
     }
   }
 
-
+  /// Update an existing inspection
   static Future<void> updateInspection(int inspectionId, String token, Map<String, dynamic> data) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}inspections/$inspectionId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/$inspectionId');
     final response = await http.put(
       url,
       headers: ApiConfig.headers(token: token),
@@ -84,6 +84,22 @@ class InspectionService {
     if (response.statusCode != 200) {
       throw Exception('Failed to update inspection: ${response.statusCode} ${response.body}');
     }
+
+    debugPrint("Inspection updated successfully: ${response.body}");
   }
 
+  /// Delete an inspection by ID (admin-only)
+  static Future<void> deleteInspection(int inspectionId, String token) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/$inspectionId');
+    final response = await http.delete(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete inspection: ${response.statusCode} ${response.body}');
+    }
+
+    debugPrint("Inspection deleted successfully");
+  }
 }

@@ -33,9 +33,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
             })
         .toList();
 
-    if (itemsControllers.isEmpty) {
-      _addItem();
-    }
+    if (itemsControllers.isEmpty) _addItem();
   }
 
   void _addItem() {
@@ -54,9 +52,10 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
   }
 
   Future<void> _saveTemplate() async {
-    final token = context.read<AuthProvider>().token!;
-    final id = widget.template["id"];
+    final token = context.read<AuthProvider>().token;
+    if (token == null) return;
 
+    final id = widget.template["id"];
     final items = itemsControllers
         .map((c) => {
               "name": c["name"]!.text.trim(),
@@ -85,23 +84,26 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
         isDefault: isDefault,
       );
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Template updated successfully")),
       );
-      Navigator.pop(context, true); // return success
+      Navigator.pop(context, true);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error updating template: $e")),
       );
     } finally {
-      setState(() => saving = false);
+      if (mounted) setState(() => saving = false);
     }
   }
 
   Future<void> _deleteTemplate() async {
-    final token = context.read<AuthProvider>().token!;
-    final id = widget.template["id"];
+    final token = context.read<AuthProvider>().token;
+    if (token == null) return;
 
+    final id = widget.template["id"];
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -128,23 +130,24 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
 
     try {
       await TemplateService.deleteTemplate(token, id);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Template deleted successfully")),
       );
-      Navigator.pop(context, true); // return success
+      Navigator.pop(context, true);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error deleting template: $e")),
       );
     } finally {
-      setState(() => saving = false);
+      if (mounted) setState(() => saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Template"),
         actions: [
@@ -220,7 +223,6 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                 ],
               ),
             ),
-    ),
     );
   }
 }

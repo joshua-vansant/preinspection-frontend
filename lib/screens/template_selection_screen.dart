@@ -17,13 +17,14 @@ class TemplateSelectionScreen extends StatefulWidget {
   });
 
   @override
-  _TemplateSelectionScreenState createState() => _TemplateSelectionScreenState();
+  State<TemplateSelectionScreen> createState() =>
+      _TemplateSelectionScreenState();
 }
 
 class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
   List<Map<String, dynamic>> templates = [];
   bool isLoading = true;
-  String error = '';
+  String? error;
 
   @override
   void initState() {
@@ -32,16 +33,24 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
   }
 
   Future<void> fetchTemplates() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
     try {
       final token = context.read<AuthProvider>().token;
       if (token == null) throw Exception("No token found");
 
       final result = await TemplateService.getTemplates(token);
+
+      if (!mounted) return;
       setState(() {
         templates = result;
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         error = 'Failed to load templates: $e';
         isLoading = false;
@@ -49,41 +58,37 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
     }
   }
 
-  void selectTemplate(Map<String, dynamic> template) async {
-    // Merge vehicle and inspection into the template
+  Future<void> selectTemplate(Map<String, dynamic> template) async {
     final merged = Map<String, dynamic>.from(template);
 
-    // Pass the vehicle ID and inspection type via constructor
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => InspectionFormScreen(
           inspection: merged,
-          vehicleId: widget.vehicle['id'], // required for new inspections
-          inspectionType: widget.inspectionType, // required for new inspections
+          vehicleId: widget.vehicle['id'],
+          inspectionType: widget.inspectionType,
         ),
       ),
     );
 
+    if (!mounted) return;
     if (result == true) {
-      // A new inspection was submitted
-      debugPrint("Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})");
+      debugPrint(
+          "Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})");
       Navigator.pop(context, true);
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) return const Center(child: CircularProgressIndicator());
-    if (error.isNotEmpty) return Center(child: Text(error));
+    if (error != null) return Center(child: Text(error!));
 
     return Scaffold(
       appBar: AppBar(title: const Text("Select Template")),
       body: Column(
         children: [
-          // small header showing vehicle + inspection type
           Container(
             width: double.infinity,
             color: Colors.blue.shade50,
@@ -91,14 +96,19 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Vehicle: ${widget.vehicle['name'] ?? widget.vehicle['id']}',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  'Vehicle: ${widget.vehicle['name'] ?? widget.vehicle['id']}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
                 Text('Inspection type: ${widget.inspectionType.toUpperCase()}'),
                 if (widget.lastInspection != null) ...[
                   const SizedBox(height: 6),
-                  Text('Last inspection id: ${widget.lastInspection!['id']}', style: const TextStyle(fontSize: 12)),
-                ]
+                  Text(
+                    'Last inspection id: ${widget.lastInspection!['id']}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
               ],
             ),
           ),
@@ -109,7 +119,8 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
                 final template = templates[index];
                 return ListTile(
                   title: Text(template['name']),
-                  subtitle: Text('Created by: ${template['created_by'] ?? 'unknown'}'),
+                  subtitle: Text(
+                      'Created by: ${template['created_by'] ?? 'unknown'}'),
                   onTap: () => selectTemplate(template),
                 );
               },

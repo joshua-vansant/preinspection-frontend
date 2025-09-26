@@ -19,7 +19,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   @override
   void initState() {
     super.initState();
-    _addItem(); // start with one empty item
+    _addItem(); // Start with one empty item
   }
 
   void _addItem() {
@@ -38,7 +38,8 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   }
 
   Future<void> _createTemplate() async {
-    final token = context.read<AuthProvider>().token!;
+    final token = context.read<AuthProvider>().token;
+    if (token == null) return;
 
     final items = itemsControllers
         .map((c) => {
@@ -67,23 +68,24 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
         isDefault: isDefault,
       );
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Template created successfully")),
       );
       Navigator.pop(context, true);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error creating template: $e")),
       );
     } finally {
-      setState(() => creating = false);
+      if (mounted) setState(() => creating = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text("Create Template"),
         actions: [
@@ -154,7 +156,6 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                 ],
               ),
             ),
-    ),
     );
   }
 }

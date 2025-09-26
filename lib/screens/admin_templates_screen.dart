@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -19,18 +18,22 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
 
   Future<void> _fetchTemplates() async {
     setState(() => loading = true);
-    final token = context.read<AuthProvider>().token!;
+    final token = context.read<AuthProvider>().token;
+    if (token == null) return;
+
     try {
       final result = await TemplateService.getTemplates(token);
       setState(() => templates = result);
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error fetching templates: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error fetching templates: $e")),
+        );
+      }
     } finally {
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
     }
   }
-
 
   @override
   void initState() {
@@ -49,19 +52,26 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
               : ListView.builder(
                   itemCount: templates.length,
                   itemBuilder: (context, index) {
-                    final t = templates[index];
+                    final template = templates[index];
                     return ListTile(
-                      title: Text(t['name']),
-                      subtitle: Text("Items: ${t['items'].length}"),
-                      trailing:
-                          t['is_default'] ? const Icon(Icons.star) : null,
+                      title: Text(template['name'] ?? "Unnamed"),
+                      subtitle: Text(
+                        "Items: ${(template['items'] as List?)?.length ?? 0}",
+                      ),
+                      trailing: template['is_default'] == true
+                          ? const Icon(Icons.star)
+                          : null,
                       onTap: () async {
                         final updated = await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => EditTemplateScreen(template: t),),);
-                          if(updated == true){
-                            _fetchTemplates(); //refresh list
-                          }
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                EditTemplateScreen(template: template),
+                          ),
+                        );
+                        if (updated == true) {
+                          _fetchTemplates(); // Refresh list after edit
+                        }
                       },
                     );
                   },
@@ -69,16 +79,15 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
-        final created = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CreateTemplateScreen()),
-        );
-        if (created == true) {
-          _fetchTemplates(); // refresh the list if a new template was created
-        }
-      },
+          final created = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateTemplateScreen()),
+          );
+          if (created == true) {
+            _fetchTemplates(); // Refresh list after new template
+          }
+        },
       ),
     );
   }
 }
-

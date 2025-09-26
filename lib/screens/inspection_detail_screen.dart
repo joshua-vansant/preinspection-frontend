@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import 'package:provider/provider.dart'; 
 import 'inspection_form_screen.dart';
 import 'package:intl/intl.dart';
 import '../services/inspection_service.dart';
 
 DateTime parseUtcToLocal(String timestamp) {
+  // Ensure the timestamp is treated as UTC if no timezone is present
   DateTime utcTime = DateTime.tryParse(timestamp + 'Z') ?? DateTime.now().toUtc();
-  // If the parsed time doesn't have a timezone, force it to UTC
-  if (!utcTime.isUtc) {
-    utcTime = utcTime.toUtc();
-  }
-  final localTime = utcTime.toLocal();
-  return localTime;
+  if (!utcTime.isUtc) utcTime = utcTime.toUtc();
+  return utcTime.toLocal();
 }
 
 class InspectionDetailScreen extends StatelessWidget {
@@ -24,23 +21,22 @@ class InspectionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final results = inspection['results'] as Map<String, dynamic>? ?? {};
 
-    final createdAt = parseUtcToLocal(inspection['created_at']);
+    final createdAt = parseUtcToLocal(inspection['created_at'] ?? DateTime.now().toIso8601String());
     final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
-    final editable = DateTime.now().difference(createdAt).inMinutes <= 30;
 
-    // print("Editable? $editable");
-    // print("Formatted date for display: $formattedDate");
+    // Editable within 30 minutes of creation
+    final editable = DateTime.now().difference(createdAt).inMinutes <= 30;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inspection #${inspection['id']} (${inspection['type']})'),
+        title: Text('Inspection #${inspection['id']} (${inspection['type'] ?? "N/A"})'),
         actions: [
           if (editable)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () async {
-                final inspectionId = inspection['id'];
                 final token = context.read<AuthProvider>().token;
+                if (token == null) return;
 
                 showDialog(
                   context: context,
@@ -49,8 +45,12 @@ class InspectionDetailScreen extends StatelessWidget {
                 );
 
                 try {
-                  final fullInspection = await InspectionService.getInspectionById(inspectionId, token!);
-                  Navigator.pop(context); // Remove loading dialog
+                  final fullInspection = await InspectionService.getInspectionById(
+                    inspection['id'],
+                    token,
+                  );
+                  Navigator.pop(context); // remove loading dialog
+
                   final template = fullInspection['template'] as Map<String, dynamic>?;
 
                   if (template == null || template.isEmpty) {
@@ -60,7 +60,6 @@ class InspectionDetailScreen extends StatelessWidget {
                     return;
                   }
 
-                  // Pass the full inspection to the form
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -78,8 +77,6 @@ class InspectionDetailScreen extends StatelessWidget {
                 }
               },
             )
-
-
         ],
       ),
       body: Padding(
@@ -88,25 +85,27 @@ class InspectionDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Vehicle ID: ${inspection['vehicle_id'] ?? "N/A"}'),
-            Text('Template ID: ${inspection['template_id']}'),
+            Text('Template ID: ${inspection['template_id'] ?? "N/A"}'),
             Text('Date: $formattedDate'),
             const SizedBox(height: 16),
             const Text('Results:', style: TextStyle(fontWeight: FontWeight.bold)),
             Expanded(
               child: ListView(
                 children: results.entries.map((e) {
+                  final displayKey = e.key.toString();
+                  final displayValue = e.value?.toString() ?? "N/A";
                   return ListTile(
-                    title: Text('Item ${e.key}'),
-                    trailing: Text(e.value.toString()),
+                    title: Text('Item $displayKey'),
+                    trailing: Text(displayValue),
                   );
                 }).toList(),
               ),
             ),
-            if (inspection['notes'] != null && inspection['notes'].isNotEmpty) ...[
+            if (inspection['notes'] != null && (inspection['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 16),
               const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
               Text(inspection['notes']),
-            ]
+            ],
           ],
         ),
       ),

@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
-// import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,8 +14,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final phoneController = TextEditingController();
+
   String error = "";
   bool loading = false;
+  bool isRegistering = false; // <-- toggle flag
 
   Future<void> handleLogin() async {
     setState(() {
@@ -29,29 +33,29 @@ class _LoginScreenState extends State<LoginScreen> {
         emailController.text.trim(),
         passwordController.text.trim(),
       );
+
       final token = result['access_token'];
-      final role = result['role'];
-      // debugPrint("Login result: $result");
-      // debugPrint("Saving token: $token, role: $role");
+      final userData = result['user'];
+      final role = userData['role'] as String;
 
-      // Save token and role in provider
-      final authProvider = context.read<AuthProvider>();
-      authProvider.setToken(token, role);
-
-      final orgData = await OrganizationService.getMyOrg(token);
-      if (orgData != null) {
-        authProvider.setOrg(orgData);
+      if (token != null && role != null) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        authProvider.setToken(token, role, userData: userData);
       }
 
-      // Navigate to dashboard
+      // Fetch org data if available
+      if (token != null) {
+        final orgData = await OrganizationService.getMyOrg(token);
+        if (orgData != null) {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          authProvider.setOrg(orgData);
+        }
+      }
+
       if (!mounted) return;
-      Navigator.pushReplacementNamed(
-        context,
-        '/dashboard'
-      );
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       if (!mounted) return;
-      debugPrint("Login error: $e");
       setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
@@ -66,51 +70,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final result = await AuthService.register(
-        emailController.text.trim(),
-        passwordController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        firstName: firstNameController.text.trim(),
+        lastName: lastNameController.text.trim(),
+        phoneNumber: phoneController.text.trim().isEmpty
+            ? null
+            : phoneController.text.trim(),
       );
+
       final token = result['access_token'];
-      final role = result['role'];
+      final userData = result['user'];
+      final role = userData['role'] as String;
 
       if (token != null && role != null) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      authProvider.setToken(token, role);
-    }
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        authProvider.setToken(token, role, userData: userData);
+      }
 
-      // Navigate to dashboard
       if (!mounted) return;
-      Navigator.pushReplacementNamed(
-        context,
-        '/dashboard',
-      );
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
+      if (!mounted) return;
       setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
+  Widget buildTextField(
+      {required TextEditingController controller,
+      required String label,
+      bool obscure = false,
+      TextInputAction action = TextInputAction.next,
+      TextInputType type = TextInputType.text}) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      obscureText: obscure,
+      textInputAction: action,
+      keyboardType: type,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
+      appBar: AppBar(title: Text(isRegistering ? "Register" : "Login")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(labelText: "Password"),
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-            ),
+            if (isRegistering) ...[
+              buildTextField(controller: firstNameController, label: "First Name"),
+              const SizedBox(height: 8),
+              buildTextField(controller: lastNameController, label: "Last Name"),
+              const SizedBox(height: 8),
+              buildTextField(
+                  controller: phoneController,
+                  label: "Phone Number (optional)",
+                  type: TextInputType.phone),
+              const SizedBox(height: 8),
+            ],
+            buildTextField(
+                controller: emailController,
+                label: "Email",
+                type: TextInputType.emailAddress),
+            const SizedBox(height: 8),
+            buildTextField(
+                controller: passwordController,
+                label: "Password",
+                obscure: true,
+                action: TextInputAction.done),
             const SizedBox(height: 12),
             if (error.isNotEmpty)
               Text(error, style: const TextStyle(color: Colors.red)),
@@ -120,12 +151,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 : Column(
                     children: [
                       ElevatedButton(
-                        onPressed: handleLogin,
-                        child: const Text("Login"),
+                        onPressed: isRegistering ? handleRegister : handleLogin,
+                        child: Text(isRegistering ? "Register" : "Login"),
                       ),
                       TextButton(
-                        onPressed: handleRegister,
-                        child: const Text("Don't have an account? Register"),
+                        onPressed: () {
+                          setState(() {
+                            isRegistering = !isRegistering;
+                            error = "";
+                          });
+                        },
+                        child: Text(isRegistering
+                            ? "Already have an account? Login"
+                            : "Don't have an account? Register"),
                       ),
                     ],
                   ),

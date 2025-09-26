@@ -19,11 +19,25 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> register(String email, String password) async {
+  static Future<Map<String, dynamic>> register({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    String? phoneNumber,
+  }) async {
+    final body = {
+      'email': email,
+      'password': password,
+      'first_name': firstName,
+      'last_name': lastName,
+    };
+    if (phoneNumber != null) body['phone_number'] = phoneNumber;
+
     final response = await http.post(
       Uri.parse("${ApiConfig.baseUrl}/auth/register"),
       headers: ApiConfig.headers(),
-      body: jsonEncode({'email': email, 'password': password}),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 201) {
@@ -31,7 +45,8 @@ class AuthService {
       if (decoded is Map<String, dynamic>) return decoded;
       throw Exception("Unexpected response format: ${response.body}");
     } else {
-      throw Exception(jsonDecode(response.body)['error']);
+      final error = jsonDecode(response.body)['error'] ?? 'Unknown error';
+      throw Exception(error);
     }
   }
 }

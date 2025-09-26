@@ -16,27 +16,39 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
   bool _loading = false;
   bool _copied = false;
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _fetchInviteCode() async {
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      _showSnackBar('Not authenticated');
+      return;
+    }
+
+    if (!mounted) return;
     setState(() => _loading = true);
-    final token = context.read<AuthProvider>().token!;
+
     try {
       final code = await OrganizationService.getInviteCode(token);
-      setState(() => _inviteCode = code);
+      if (mounted) setState(() => _inviteCode = code);
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error fetching code: $e")));
+      _showSnackBar("Error fetching code: $e");
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _copyToClipboard() async {
     if (_inviteCode == null) return;
-  await Clipboard.setData(ClipboardData(text: _inviteCode!));
+
+    await Clipboard.setData(ClipboardData(text: _inviteCode!));
+
+    if (!mounted) return;
     setState(() => _copied = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Invite code copied!")),
-    );
+    _showSnackBar("Invite code copied!");
+
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) setState(() => _copied = false);
   }
@@ -95,7 +107,7 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
                   ],
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
