@@ -8,7 +8,9 @@ class DriverDrawerWidget extends StatelessWidget {
   const DriverDrawerWidget({super.key});
 
   void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

@@ -58,7 +58,8 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
 
     // Initialize answers
     answers = {
-      for (var item in items) item['id'].toString(): results[item['id'].toString()] == "yes"
+      for (var item in items)
+        item['id'].toString(): results[item['id'].toString()] == "yes",
     };
   }
 
@@ -79,7 +80,10 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
       "template_id": template['id'],
       if (!isEdit) "vehicle_id": vehicleId,
       if (!isEdit) "type": inspectionType,
-      "results": {for (var item in items) item['id'].toString(): answers[item['id'].toString()]! ? "yes" : "no"},
+      "results": {
+        for (var item in items)
+          item['id'].toString(): answers[item['id'].toString()]! ? "yes" : "no",
+      },
       "notes": notesController.text.trim(),
     };
 
@@ -95,9 +99,9 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
             "notes": inspectionPayload['notes'],
           },
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Inspection updated")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Inspection updated")));
       } else {
         await InspectionService.submitInspection(token, inspectionPayload);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +128,9 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Inspection: ${template['name'] ?? 'Unknown'}")),
+      appBar: AppBar(
+        title: Text("Inspection: ${template['name'] ?? 'Unknown'}"),
+      ),
       body: ListView.builder(
         itemCount: items.length + 1,
         itemBuilder: (_, index) {

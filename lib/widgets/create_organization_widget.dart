@@ -9,7 +9,8 @@ class CreateOrganizationWidget extends StatefulWidget {
   const CreateOrganizationWidget({super.key, this.onCreated});
 
   @override
-  State<CreateOrganizationWidget> createState() => _CreateOrganizationWidgetState();
+  State<CreateOrganizationWidget> createState() =>
+      _CreateOrganizationWidgetState();
 }
 
 class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
@@ -36,7 +37,9 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
     final name = _nameController.text.trim();
     if (name.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Organization name must be at least 3 characters')),
+        const SnackBar(
+          content: Text('Organization name must be at least 3 characters'),
+        ),
       );
       return;
     }

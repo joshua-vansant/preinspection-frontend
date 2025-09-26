@@ -43,8 +43,9 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
   Future<void> selectVehicle(Map<String, dynamic> vehicle) async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Not authenticated')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Not authenticated')));
       return;
     }
 
@@ -57,8 +58,10 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 
     Map<String, dynamic>? lastInspection;
     try {
-      lastInspection =
-          await InspectionService.getLastInspection(token, vehicle['id']);
+      lastInspection = await InspectionService.getLastInspection(
+        token,
+        vehicle['id'],
+      );
     } catch (e) {
       debugPrint('Failed to fetch last inspection: $e');
     } finally {
@@ -99,7 +102,9 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             child: ListTile(
-              title: Text("${vehicle['number']} (${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''})"),
+              title: Text(
+                "${vehicle['number']} (${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''})",
+              ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -107,7 +112,8 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                   if (vehicle['license_plate'] != null)
                     Text("Plate: ${vehicle['license_plate']}"),
                   if (vehicle['vin'] != null) Text("VIN: ${vehicle['vin']}"),
-                  if (vehicle['mileage'] != null) Text("Mileage: ${vehicle['mileage']}"),
+                  if (vehicle['mileage'] != null)
+                    Text("Mileage: ${vehicle['mileage']}"),
                   Text("Status: ${vehicle['status'] ?? 'unknown'}"),
                 ],
               ),

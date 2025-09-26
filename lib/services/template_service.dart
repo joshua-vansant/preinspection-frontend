@@ -43,11 +43,7 @@ class TemplateService {
     final response = await http.post(
       Uri.parse("${ApiConfig.baseUrl}/templates/create"),
       headers: ApiConfig.headers(token: token),
-      body: jsonEncode({
-        "name": name,
-        "items": items,
-        "is_default": isDefault,
-      }),
+      body: jsonEncode({"name": name, "items": items, "is_default": isDefault}),
     );
 
     if (response.statusCode == 201) {
@@ -69,11 +65,7 @@ class TemplateService {
     final response = await http.put(
       Uri.parse("${ApiConfig.baseUrl}/templates/$id/edit"),
       headers: ApiConfig.headers(token: token),
-      body: jsonEncode({
-        "name": name,
-        "items": items,
-        "is_default": isDefault,
-      }),
+      body: jsonEncode({"name": name, "items": items, "is_default": isDefault}),
     );
 
     if (response.statusCode == 200) {

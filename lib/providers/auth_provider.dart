@@ -12,7 +12,6 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? get org => _org;
   Map<String, dynamic>? get user => _user;
 
-
   void setOrg(Map<String, dynamic>? orgData) {
     _org = orgData;
     notifyListeners();

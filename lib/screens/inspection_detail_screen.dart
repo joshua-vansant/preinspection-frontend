@@ -7,7 +7,8 @@ import '../services/inspection_service.dart';
 
 DateTime parseUtcToLocal(String timestamp) {
   // Ensure the timestamp is treated as UTC if no timezone is present
-  DateTime utcTime = DateTime.tryParse(timestamp + 'Z') ?? DateTime.now().toUtc();
+  DateTime utcTime =
+      DateTime.tryParse(timestamp + 'Z') ?? DateTime.now().toUtc();
   if (!utcTime.isUtc) utcTime = utcTime.toUtc();
   return utcTime.toLocal();
 }
@@ -21,7 +22,9 @@ class InspectionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final results = inspection['results'] as Map<String, dynamic>? ?? {};
 
-    final createdAt = parseUtcToLocal(inspection['created_at'] ?? DateTime.now().toIso8601String());
+    final createdAt = parseUtcToLocal(
+      inspection['created_at'] ?? DateTime.now().toIso8601String(),
+    );
     final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
 
     // Editable within 30 minutes of creation
@@ -29,7 +32,9 @@ class InspectionDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inspection #${inspection['id']} (${inspection['type'] ?? "N/A"})'),
+        title: Text(
+          'Inspection #${inspection['id']} (${inspection['type'] ?? "N/A"})',
+        ),
         actions: [
           if (editable)
             IconButton(
@@ -41,21 +46,26 @@ class InspectionDetailScreen extends StatelessWidget {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
                 );
 
                 try {
-                  final fullInspection = await InspectionService.getInspectionById(
-                    inspection['id'],
-                    token,
-                  );
+                  final fullInspection =
+                      await InspectionService.getInspectionById(
+                        inspection['id'],
+                        token,
+                      );
                   Navigator.pop(context); // remove loading dialog
 
-                  final template = fullInspection['template'] as Map<String, dynamic>?;
+                  final template =
+                      fullInspection['template'] as Map<String, dynamic>?;
 
                   if (template == null || template.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Template data is missing. Cannot edit.')),
+                      const SnackBar(
+                        content: Text('Template data is missing. Cannot edit.'),
+                      ),
                     );
                     return;
                   }
@@ -76,7 +86,7 @@ class InspectionDetailScreen extends StatelessWidget {
                   );
                 }
               },
-            )
+            ),
         ],
       ),
       body: Padding(
@@ -88,7 +98,10 @@ class InspectionDetailScreen extends StatelessWidget {
             Text('Template ID: ${inspection['template_id'] ?? "N/A"}'),
             Text('Date: $formattedDate'),
             const SizedBox(height: 16),
-            const Text('Results:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Results:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             Expanded(
               child: ListView(
                 children: results.entries.map((e) {
@@ -101,9 +114,13 @@ class InspectionDetailScreen extends StatelessWidget {
                 }).toList(),
               ),
             ),
-            if (inspection['notes'] != null && (inspection['notes'] as String).isNotEmpty) ...[
+            if (inspection['notes'] != null &&
+                (inspection['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Notes:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               Text(inspection['notes']),
             ],
           ],

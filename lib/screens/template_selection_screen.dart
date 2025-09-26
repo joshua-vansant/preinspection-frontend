@@ -75,7 +75,8 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
     if (!mounted) return;
     if (result == true) {
       debugPrint(
-          "Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})");
+        "Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})",
+      );
       Navigator.pop(context, true);
     }
   }
@@ -120,7 +121,8 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
                 return ListTile(
                   title: Text(template['name']),
                   subtitle: Text(
-                      'Created by: ${template['created_by'] ?? 'unknown'}'),
+                    'Created by: ${template['created_by'] ?? 'unknown'}',
+                  ),
                   onTap: () => selectTemplate(template),
                 );
               },

@@ -3,7 +3,10 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
 class OrganizationService {
-  static Future<Map<String, dynamic>> joinOrg(String token, String inviteCode) async {
+  static Future<Map<String, dynamic>> joinOrg(
+    String token,
+    String inviteCode,
+  ) async {
     final url = Uri.parse('${ApiConfig.baseUrl}organizations/join');
 
     final response = await http.post(
@@ -15,7 +18,9 @@ class OrganizationService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw Exception('Failed to join organization: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to join organization: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
@@ -44,7 +49,9 @@ class OrganizationService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to leave organization: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to leave organization: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
@@ -54,7 +61,7 @@ class OrganizationService {
       headers: ApiConfig.headers(token: token),
     );
 
-    if(response.statusCode != 200){
+    if (response.statusCode != 200) {
       throw Exception("Failed to fetch invite code: ${response.body}");
     }
 
@@ -76,23 +83,26 @@ class OrganizationService {
     return data["invite_code"];
   }
 
-static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}organizations/users');
-  final response = await http.get(url, headers: ApiConfig.headers(token: token));
+  static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}organizations/users');
+    final response = await http.get(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
 
-  if (response.statusCode != 200) {
-    throw Exception('Failed to fetch users: ${response.body}');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch users: ${response.body}');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final users = data['users'] as List<dynamic>?;
+
+    return users != null
+        ? users.map((e) => Map<String, dynamic>.from(e)).toList()
+        : [];
   }
 
-  final data = jsonDecode(response.body) as Map<String, dynamic>;
-  final users = data['users'] as List<dynamic>?;
-
-  return users != null
-      ? users.map((e) => Map<String, dynamic>.from(e)).toList()
-      : [];
-}
-
-static Future<void> removeDriver(String token, int driverId) async {
+  static Future<void> removeDriver(String token, int driverId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}organizations/remove_driver');
     final response = await http.post(
       url,
@@ -106,7 +116,9 @@ static Future<void> removeDriver(String token, int driverId) async {
   }
 
   static Future<Map<String, dynamic>> createOrg(
-      String token, String name) async {
+    String token,
+    String name,
+  ) async {
     final url = Uri.parse('${ApiConfig.baseUrl}organizations/create');
 
     final response = await http.post(
@@ -119,8 +131,8 @@ static Future<void> removeDriver(String token, int driverId) async {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception(
-          'Failed to create organization: ${response.statusCode} ${response.body}');
+        'Failed to create organization: ${response.statusCode} ${response.body}',
+      );
     }
   }
 }
-

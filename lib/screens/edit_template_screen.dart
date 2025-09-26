@@ -27,10 +27,12 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
 
     final List items = widget.template["items"] ?? [];
     itemsControllers = items
-        .map((item) => {
-              "name": TextEditingController(text: item["name"] ?? ""),
-              "question": TextEditingController(text: item["question"] ?? ""),
-            })
+        .map(
+          (item) => {
+            "name": TextEditingController(text: item["name"] ?? ""),
+            "question": TextEditingController(text: item["question"] ?? ""),
+          },
+        )
         .toList();
 
     if (itemsControllers.isEmpty) _addItem();
@@ -57,18 +59,22 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
 
     final id = widget.template["id"];
     final items = itemsControllers
-        .map((c) => {
-              "name": c["name"]!.text.trim(),
-              "question": c["question"]!.text.trim(),
-            })
-        .where((item) =>
-            item["name"]!.isNotEmpty && item["question"]!.isNotEmpty)
+        .map(
+          (c) => {
+            "name": c["name"]!.text.trim(),
+            "question": c["question"]!.text.trim(),
+          },
+        )
+        .where(
+          (item) => item["name"]!.isNotEmpty && item["question"]!.isNotEmpty,
+        )
         .toList();
 
     if (nameController.text.trim().isEmpty || items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Please enter a name and at least one item")),
+          content: Text("Please enter a name and at least one item"),
+        ),
       );
       return;
     }
@@ -91,9 +97,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating template: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error updating template: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -109,7 +115,8 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       builder: (context) => AlertDialog(
         title: const Text("Delete Template"),
         content: const Text(
-            "Are you sure you want to delete this template? This action cannot be undone."),
+          "Are you sure you want to delete this template? This action cannot be undone.",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -137,9 +144,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error deleting template: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error deleting template: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -165,8 +172,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration:
-                        const InputDecoration(labelText: "Template Name"),
+                    decoration: const InputDecoration(
+                      labelText: "Template Name",
+                    ),
                   ),
                   const SizedBox(height: 12),
                   SwitchListTile(
@@ -196,8 +204,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: IconButton(
-                            icon:
-                                const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _removeItem(index),
                           ),
                         ),

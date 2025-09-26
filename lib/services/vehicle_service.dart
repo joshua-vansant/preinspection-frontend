@@ -18,12 +18,17 @@ class VehicleService {
           .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
           .toList();
     } else {
-      throw Exception('Failed to fetch vehicles: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to fetch vehicles: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
   /// Fetch a single vehicle by ID
-  static Future<Map<String, dynamic>> getVehicleById(String token, int vehicleId) async {
+  static Future<Map<String, dynamic>> getVehicleById(
+    String token,
+    int vehicleId,
+  ) async {
     final Uri url = Uri.parse('${ApiConfig.baseUrl}/vehicles/$vehicleId');
 
     final response = await http.get(
@@ -34,7 +39,9 @@ class VehicleService {
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to fetch vehicle $vehicleId: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to fetch vehicle $vehicleId: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
@@ -74,7 +81,9 @@ class VehicleService {
     if (response.statusCode == 201) {
       return Map<String, dynamic>.from(jsonDecode(response.body)['vehicle']);
     } else {
-      throw Exception('Failed to add vehicle: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to add vehicle: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
@@ -115,7 +124,9 @@ class VehicleService {
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body)['vehicle']);
     } else {
-      throw Exception('Failed to update vehicle: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to update vehicle: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
@@ -129,7 +140,9 @@ class VehicleService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete vehicle: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to delete vehicle: ${response.statusCode} ${response.body}',
+      );
     }
   }
 }

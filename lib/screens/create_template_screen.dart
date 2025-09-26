@@ -42,18 +42,22 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
     if (token == null) return;
 
     final items = itemsControllers
-        .map((c) => {
-              "name": c["name"]!.text.trim(),
-              "question": c["question"]!.text.trim(),
-            })
-        .where((item) =>
-            item["name"]!.isNotEmpty && item["question"]!.isNotEmpty)
+        .map(
+          (c) => {
+            "name": c["name"]!.text.trim(),
+            "question": c["question"]!.text.trim(),
+          },
+        )
+        .where(
+          (item) => item["name"]!.isNotEmpty && item["question"]!.isNotEmpty,
+        )
         .toList();
 
     if (nameController.text.trim().isEmpty || items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Please enter a name and at least one item")),
+          content: Text("Please enter a name and at least one item"),
+        ),
       );
       return;
     }
@@ -75,9 +79,9 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error creating template: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error creating template: $e")));
     } finally {
       if (mounted) setState(() => creating = false);
     }
@@ -103,8 +107,9 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration:
-                        const InputDecoration(labelText: "Template Name"),
+                    decoration: const InputDecoration(
+                      labelText: "Template Name",
+                    ),
                   ),
                   const SizedBox(height: 12),
                   SwitchListTile(

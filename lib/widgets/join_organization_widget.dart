@@ -21,7 +21,9 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _joinOrganization() async {

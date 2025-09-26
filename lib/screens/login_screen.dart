@@ -47,7 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (token != null) {
         final orgData = await OrganizationService.getMyOrg(token);
         if (orgData != null) {
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
           authProvider.setOrg(orgData);
         }
       }
@@ -98,12 +101,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Widget buildTextField(
-      {required TextEditingController controller,
-      required String label,
-      bool obscure = false,
-      TextInputAction action = TextInputAction.next,
-      TextInputType type = TextInputType.text}) {
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    bool obscure = false,
+    TextInputAction action = TextInputAction.next,
+    TextInputType type = TextInputType.text,
+  }) {
     return TextField(
       controller: controller,
       decoration: InputDecoration(labelText: label),
@@ -122,26 +126,35 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             if (isRegistering) ...[
-              buildTextField(controller: firstNameController, label: "First Name"),
-              const SizedBox(height: 8),
-              buildTextField(controller: lastNameController, label: "Last Name"),
+              buildTextField(
+                controller: firstNameController,
+                label: "First Name",
+              ),
               const SizedBox(height: 8),
               buildTextField(
-                  controller: phoneController,
-                  label: "Phone Number (optional)",
-                  type: TextInputType.phone),
+                controller: lastNameController,
+                label: "Last Name",
+              ),
+              const SizedBox(height: 8),
+              buildTextField(
+                controller: phoneController,
+                label: "Phone Number (optional)",
+                type: TextInputType.phone,
+              ),
               const SizedBox(height: 8),
             ],
             buildTextField(
-                controller: emailController,
-                label: "Email",
-                type: TextInputType.emailAddress),
+              controller: emailController,
+              label: "Email",
+              type: TextInputType.emailAddress,
+            ),
             const SizedBox(height: 8),
             buildTextField(
-                controller: passwordController,
-                label: "Password",
-                obscure: true,
-                action: TextInputAction.done),
+              controller: passwordController,
+              label: "Password",
+              obscure: true,
+              action: TextInputAction.done,
+            ),
             const SizedBox(height: 12),
             if (error.isNotEmpty)
               Text(error, style: const TextStyle(color: Colors.red)),
@@ -161,9 +174,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             error = "";
                           });
                         },
-                        child: Text(isRegistering
-                            ? "Already have an account? Login"
-                            : "Don't have an account? Register"),
+                        child: Text(
+                          isRegistering
+                              ? "Already have an account? Login"
+                              : "Don't have an account? Register",
+                        ),
                       ),
                     ],
                   ),

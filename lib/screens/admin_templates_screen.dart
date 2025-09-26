@@ -26,9 +26,9 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
       setState(() => templates = result);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error fetching templates: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error fetching templates: $e")));
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -48,34 +48,33 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : templates.isEmpty
-              ? const Center(child: Text("No templates available"))
-              : ListView.builder(
-                  itemCount: templates.length,
-                  itemBuilder: (context, index) {
-                    final template = templates[index];
-                    return ListTile(
-                      title: Text(template['name'] ?? "Unnamed"),
-                      subtitle: Text(
-                        "Items: ${(template['items'] as List?)?.length ?? 0}",
+          ? const Center(child: Text("No templates available"))
+          : ListView.builder(
+              itemCount: templates.length,
+              itemBuilder: (context, index) {
+                final template = templates[index];
+                return ListTile(
+                  title: Text(template['name'] ?? "Unnamed"),
+                  subtitle: Text(
+                    "Items: ${(template['items'] as List?)?.length ?? 0}",
+                  ),
+                  trailing: template['is_default'] == true
+                      ? const Icon(Icons.star)
+                      : null,
+                  onTap: () async {
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditTemplateScreen(template: template),
                       ),
-                      trailing: template['is_default'] == true
-                          ? const Icon(Icons.star)
-                          : null,
-                      onTap: () async {
-                        final updated = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                EditTemplateScreen(template: template),
-                          ),
-                        );
-                        if (updated == true) {
-                          _fetchTemplates(); // Refresh list after edit
-                        }
-                      },
                     );
+                    if (updated == true) {
+                      _fetchTemplates(); // Refresh list after edit
+                    }
                   },
-                ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {

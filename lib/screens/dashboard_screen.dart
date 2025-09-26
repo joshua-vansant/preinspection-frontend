@@ -31,7 +31,7 @@ class DashboardScreen extends StatelessWidget {
               authProvider.clearToken();
               Navigator.pushReplacementNamed(context, '/login');
             },
-          )
+          ),
         ],
       ),
       drawer: role == 'driver'
@@ -39,12 +39,15 @@ class DashboardScreen extends StatelessWidget {
           : AdminDrawerWidget(
               onOrgCreated: () {
                 // Find the AdminDashboardState and refresh users
-                final adminDashboardState = context.findAncestorStateOfType<_AdminDashboardState>();
+                final adminDashboardState = context
+                    .findAncestorStateOfType<_AdminDashboardState>();
                 adminDashboardState?._fetchUsers(); // refresh user list
                 // Join socket room again
                 final orgId = context.read<AuthProvider>().org?['id'];
                 if (orgId != null) {
-                  adminDashboardState?._socket?.emit('join_org', {'org_id': orgId});
+                  adminDashboardState?._socket?.emit('join_org', {
+                    'org_id': orgId,
+                  });
                 }
               },
             ),
@@ -58,7 +61,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
-
 
 class _DriverDashboard extends StatelessWidget {
   const _DriverDashboard({super.key});
@@ -102,7 +104,9 @@ class _DriverDashboard extends StatelessWidget {
           child: authProvider.token == null
               ? const Center(child: Text('Please log in to view inspections.'))
               : FutureBuilder<List<Map<String, dynamic>>>(
-                  future: InspectionService.getInspectionHistory(authProvider.token!),
+                  future: InspectionService.getInspectionHistory(
+                    authProvider.token!,
+                  ),
                   builder: (_, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -113,15 +117,18 @@ class _DriverDashboard extends StatelessWidget {
                     }
 
                     final history = snapshot.data!;
-                    history.sort((a, b) => b['created_at'].compareTo(a['created_at']));
+                    history.sort(
+                      (a, b) => b['created_at'].compareTo(a['created_at']),
+                    );
 
                     return ListView.builder(
                       itemCount: history.length,
                       itemBuilder: (_, index) {
                         final item = history[index];
                         final createdAt = parseUtcToLocal(item['created_at']);
-                        final formattedDate =
-                            DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
+                        final formattedDate = DateFormat(
+                          'MMM d, yyyy - h:mm a',
+                        ).format(createdAt);
 
                         return ListTile(
                           title: Text('Inspection #${item['id']}'),
@@ -141,13 +148,10 @@ class _DriverDashboard extends StatelessWidget {
                   },
                 ),
         ),
-
       ],
     );
   }
 }
-
-
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -202,7 +206,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     // Initialize socket connection
     _socket = IO.io(
-      ApiConfig.baseUrl, 
+      ApiConfig.baseUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -211,33 +215,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     _socket!.connect();
 
+    // Driver joined
     _socket!.on('driver_joined', (data) {
-    debugPrint('Driver joined: $data');
-    setState(() {
-      _users.add(Map<String, dynamic>.from(data));
-    });
-  });
+      final newDriver = Map<String, dynamic>.from(data);
+      debugPrint('Driver joined: $newDriver');
 
-  _socket!.on('driver_left', (data) {
-  debugPrint('Driver left: $data');
-  final driverId = data['id'];
-  if (driverId == null) return;
-  setState(() {
-    _users.removeWhere((user) => user['id'] == driverId);
+      setState(() {
+        // Remove existing driver if already present
+        _users.removeWhere((u) => u['id'] == newDriver['id']);
+
+        // Insert drivers after admin
+        final adminIndex = _users.indexWhere((u) => u['role'] == 'admin');
+        if (adminIndex >= 0) {
+          _users.insert(adminIndex + 1, newDriver);
+        } else {
+          _users.add(newDriver);
+        }
+      });
     });
-  });
+
+    // Driver left
+    _socket!.on('driver_left', (data) {
+      final driverId = data['id'];
+      if (driverId == null) return;
+
+      setState(() {
+        _users.removeWhere((u) => u['id'] == driverId);
+      });
+    });
 
     _socket!.onConnect((_) {
       debugPrint('Socket connected');
-      // Join organization room
       _socket!.emit('join_org', {'org_id': orgId});
     });
 
     _socket!.onDisconnect((_) => debugPrint('Socket disconnected'));
     _socket!.onError((data) => debugPrint('Socket error: $data'));
   }
-
-  
 
   @override
   void dispose() {
@@ -269,13 +283,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         const SizedBox(height: 16),
         Expanded(
-  child: Container(
-    color: Colors.grey[200],
-    child: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
-            ? Center(child: Text(_error!))
-            : _users.isEmpty
+          child: Container(
+            color: Colors.grey[200],
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? Center(child: Text(_error!))
+                : _users.isEmpty
                 ? const Center(child: Text("No users in your org yet."))
                 : ListView(
                     children: [
@@ -287,7 +301,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             '${_users.firstWhere((u) => u['role'] == 'admin')["first_name"]} '
                             '${_users.firstWhere((u) => u['role'] == 'admin')["last_name"]} (Admin)',
                           ),
-                          subtitle: Text(_users.firstWhere((u) => u['role'] == 'admin')["email"] ?? ""),
+                          subtitle: Text(
+                            _users.firstWhere(
+                                  (u) => u['role'] == 'admin',
+                                )["email"] ??
+                                "",
+                          ),
                         ),
 
                       // Show drivers below
@@ -299,17 +318,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             color: Colors.red,
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: const Icon(Icons.delete, color: Colors.white),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
                           ),
                           confirmDismiss: (_) async {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (_) => AlertDialog(
                                 title: const Text("Remove driver?"),
-                                content: Text("Are you sure you want to remove ${user['first_name']}?"),
+                                content: Text(
+                                  "Are you sure you want to remove ${user['first_name']}?",
+                                ),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
-                                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Remove")),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text("Remove"),
+                                  ),
                                 ],
                               ),
                             );
@@ -318,20 +350,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           onDismissed: (_) async {
                             try {
                               final token = context.read<AuthProvider>().token!;
-                              await OrganizationService.removeDriver(token, user['id']);
-                              setState(() => _users.removeWhere((u) => u['id'] == user['id']));
+                              await OrganizationService.removeDriver(
+                                token,
+                                user['id'],
+                              );
+                              setState(
+                                () => _users.removeWhere(
+                                  (u) => u['id'] == user['id'],
+                                ),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("${user['first_name']} removed")),
+                                SnackBar(
+                                  content: Text(
+                                    "${user['first_name']} removed",
+                                  ),
+                                ),
                               );
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Error removing driver: $e")),
+                                SnackBar(
+                                  content: Text("Error removing driver: $e"),
+                                ),
                               );
                             }
                           },
                           child: ListTile(
                             leading: const Icon(Icons.person),
-                            title: Text('${user["first_name"]} ${user["last_name"]}'),
+                            title: Text(
+                              '${user["first_name"]} ${user["last_name"]}',
+                            ),
                             subtitle: Text(user["email"] ?? ""),
                             trailing: Text(user["role"] ?? ""),
                           ),
@@ -342,12 +389,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       if (_users.where((u) => u['role'] != 'admin').isEmpty)
                         const Padding(
                           padding: EdgeInsets.all(16.0),
-                          child: Center(child: Text("No drivers in your org yet.")),
+                          child: Center(
+                            child: Text("No drivers in your org yet."),
+                          ),
                         ),
                     ],
                   ),
-            ),
-          )
+          ),
+        ),
       ],
     );
   }

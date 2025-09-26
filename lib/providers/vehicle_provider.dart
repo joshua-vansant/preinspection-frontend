@@ -39,7 +39,10 @@ class VehicleProvider extends ChangeNotifier {
   }
 
   /// Add a new vehicle
-  Future<void> addVehicle(String token, Map<String, dynamic> vehicleData) async {
+  Future<void> addVehicle(
+    String token,
+    Map<String, dynamic> vehicleData,
+  ) async {
     final vehicle = await VehicleService.addVehicle(
       token: token,
       number: vehicleData['number'],
@@ -57,7 +60,11 @@ class VehicleProvider extends ChangeNotifier {
   }
 
   /// Update an existing vehicle
-  Future<void> updateVehicle(String token, int vehicleId, Map<String, dynamic> updatedData) async {
+  Future<void> updateVehicle(
+    String token,
+    int vehicleId,
+    Map<String, dynamic> updatedData,
+  ) async {
     final updatedVehicle = await VehicleService.updateVehicle(
       token: token,
       vehicleId: vehicleId,

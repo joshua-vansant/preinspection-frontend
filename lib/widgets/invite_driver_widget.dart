@@ -17,7 +17,9 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
   bool _copied = false;
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _fetchInviteCode() async {
@@ -70,12 +72,17 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(_inviteCode == null ? "Invite Drivers" : "Get New Code"),
+                  : Text(
+                      _inviteCode == null ? "Invite Drivers" : "Get New Code",
+                    ),
             ),
             if (_inviteCode != null) ...[
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _copied ? Colors.green[300] : Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
@@ -85,7 +92,9 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
                     SelectableText(
                       _inviteCode!,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     InkWell(
