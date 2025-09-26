@@ -210,10 +210,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
 
     _socket!.connect();
+
     _socket!.on('driver_joined', (data) {
     debugPrint('Driver joined: $data');
     setState(() {
       _users.add(Map<String, dynamic>.from(data));
+    });
+  });
+
+  _socket!.on('driver_left', (data) {
+  debugPrint('Driver left: $data');
+  final driverId = data['id'];
+  if (driverId == null) return;
+  setState(() {
+    _users.removeWhere((user) => user['id'] == driverId);
     });
   });
 
@@ -226,6 +236,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _socket!.onDisconnect((_) => debugPrint('Socket disconnected'));
     _socket!.onError((data) => debugPrint('Socket error: $data'));
   }
+
+  
 
   @override
   void dispose() {
@@ -257,30 +269,85 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: Container(
-            color: Colors.grey[200],
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(child: Text(_error!))
-                    : _users.isEmpty
-                        ? const Center(child: Text("No drivers in your org yet."))
-                        : ListView.builder(
-                            itemCount: _users.length,
-                            itemBuilder: (context, index) {
-                              final user = _users[index];
-                              return ListTile(
-                                leading: const Icon(Icons.person),
-                                title: Text(user["first_name"] != null && user["last_name"] != null
-                                    ? "${user["first_name"]} ${user["last_name"]}"
-                                    : "Unnamed"),
-                                subtitle: Text(user["email"] ?? ""),
-                                trailing: Text(user["role"] ?? ""),
-                              );
-                            },
+  child: Container(
+    color: Colors.grey[200],
+    child: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : _error != null
+            ? Center(child: Text(_error!))
+            : _users.isEmpty
+                ? const Center(child: Text("No users in your org yet."))
+                : ListView(
+                    children: [
+                      // Show admin at the top
+                      if (_users.any((u) => u['role'] == 'admin'))
+                        ListTile(
+                          leading: const Icon(Icons.admin_panel_settings),
+                          title: Text(
+                            '${_users.firstWhere((u) => u['role'] == 'admin')["first_name"]} '
+                            '${_users.firstWhere((u) => u['role'] == 'admin')["last_name"]} (Admin)',
                           ),
-          ),
-        ),
+                          subtitle: Text(_users.firstWhere((u) => u['role'] == 'admin')["email"] ?? ""),
+                        ),
+
+                      // Show drivers below
+                      ..._users.where((u) => u['role'] != 'admin').map((user) {
+                        return Dismissible(
+                          key: ValueKey(user['id']),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: const Icon(Icons.delete, color: Colors.white),
+                          ),
+                          confirmDismiss: (_) async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text("Remove driver?"),
+                                content: Text("Are you sure you want to remove ${user['first_name']}?"),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+                                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Remove")),
+                                ],
+                              ),
+                            );
+                            return confirm ?? false;
+                          },
+                          onDismissed: (_) async {
+                            try {
+                              final token = context.read<AuthProvider>().token!;
+                              await OrganizationService.removeDriver(token, user['id']);
+                              setState(() => _users.removeWhere((u) => u['id'] == user['id']));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("${user['first_name']} removed")),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Error removing driver: $e")),
+                              );
+                            }
+                          },
+                          child: ListTile(
+                            leading: const Icon(Icons.person),
+                            title: Text('${user["first_name"]} ${user["last_name"]}'),
+                            subtitle: Text(user["email"] ?? ""),
+                            trailing: Text(user["role"] ?? ""),
+                          ),
+                        );
+                      }).toList(),
+
+                      // Show "no drivers" if there are none
+                      if (_users.where((u) => u['role'] != 'admin').isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: Text("No drivers in your org yet.")),
+                        ),
+                    ],
+                  ),
+            ),
+          )
       ],
     );
   }

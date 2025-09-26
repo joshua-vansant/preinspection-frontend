@@ -80,15 +80,30 @@ static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
   final url = Uri.parse('${ApiConfig.baseUrl}organizations/users');
   final response = await http.get(url, headers: ApiConfig.headers(token: token));
 
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = jsonDecode(response.body);
-    final List users = data['users'] as List? ?? [];
-    return users.map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u)).toList();
-  } else {
-    throw Exception('Failed to fetch users: ${response.statusCode} ${response.body}');
+  if (response.statusCode != 200) {
+    throw Exception('Failed to fetch users: ${response.body}');
   }
+
+  final data = jsonDecode(response.body) as Map<String, dynamic>;
+  final users = data['users'] as List<dynamic>?;
+
+  return users != null
+      ? users.map((e) => Map<String, dynamic>.from(e)).toList()
+      : [];
 }
 
+static Future<void> removeDriver(String token, int driverId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}organizations/remove_driver');
+    final response = await http.post(
+      url,
+      headers: ApiConfig.headers(token: token),
+      body: jsonEncode({'driver_id': driverId}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove driver: ${response.body}');
+    }
+  }
 
   static Future<Map<String, dynamic>> createOrg(
       String token, String name) async {
