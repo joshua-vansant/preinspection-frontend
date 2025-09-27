@@ -69,7 +69,7 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
                       ),
                     );
                     if (updated == true) {
-                      _fetchTemplates(); // Refresh list after edit
+                      _fetchTemplates();
                     }
                   },
                 );
@@ -83,7 +83,7 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
             MaterialPageRoute(builder: (_) => const CreateTemplateScreen()),
           );
           if (created == true) {
-            _fetchTemplates(); // Refresh list after new template
+            _fetchTemplates();
           }
         },
       ),

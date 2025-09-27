@@ -4,13 +4,37 @@ import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/vehicle_provider.dart';
+import 'providers/inspection_history_provider.dart';
+import 'providers/socket_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // Socket depends on Auth
+        ChangeNotifierProxyProvider<AuthProvider, SocketProvider>(
+          create: (context) =>
+              SocketProvider(authProvider: context.read<AuthProvider>()),
+          update: (context, authProvider, socketProvider) {
+            socketProvider ??= SocketProvider(authProvider: authProvider);
+            return socketProvider;
+          },
+        ),
+
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
+
+        // InspectionHistory depends on SocketProvider
+        ChangeNotifierProxyProvider<SocketProvider, InspectionHistoryProvider>(
+          create: (context) =>
+              InspectionHistoryProvider(socketProvider: context.read<SocketProvider>()),
+          update: (context, socketProvider, inspectionHistoryProvider) {
+            inspectionHistoryProvider ??=
+                InspectionHistoryProvider(socketProvider: socketProvider);
+            return inspectionHistoryProvider;
+          },
+        ),
       ],
       child: const MyApp(),
     ),

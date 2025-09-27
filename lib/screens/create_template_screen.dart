@@ -19,7 +19,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   @override
   void initState() {
     super.initState();
-    _addItem(); // Start with one empty item
+    _addItem(); 
   }
 
   void _addItem() {

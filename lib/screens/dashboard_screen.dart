@@ -246,6 +246,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       });
     });
 
+
     _socket!.onConnect((_) {
       debugPrint('Socket connected');
       _socket!.emit('join_org', {'org_id': orgId});

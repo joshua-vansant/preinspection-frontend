@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../services/inspection_service.dart';
+import '../providers/inspection_history_provider.dart';
+import '../providers/socket_provider.dart';
 
 class AdminInspectionsScreen extends StatefulWidget {
   const AdminInspectionsScreen({super.key});
@@ -11,49 +12,74 @@ class AdminInspectionsScreen extends StatefulWidget {
 }
 
 class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
-  bool _loading = false;
-  String? _error;
-  List<Map<String, dynamic>> _inspections = [];
+  bool _isSubscribed = false;
 
   @override
-  void initState() {
-    super.initState();
-    _fetchInspections();
-  }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-  Future<void> _fetchInspections() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (!_isSubscribed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final token = context.read<AuthProvider>().token;
+        final inspectionProvider = context.read<InspectionHistoryProvider>();
+        final socketProvider = context.read<SocketProvider>();
 
-    final token = context.read<AuthProvider>().token!;
-    try {
-      final data = await InspectionService.getInspectionHistory(token);
-      setState(() => _inspections = data);
-    } catch (e) {
-      setState(() => _error = "Error loading inspections: $e");
-    } finally {
-      setState(() => _loading = false);
+        if (token != null) {
+          debugPrint("AdminInspectionsScreen: Fetching initial inspection history...");
+          inspectionProvider.fetchHistory(token);
+        }
+
+        // Subscribe to new inspection events
+        socketProvider.onEvent('inspection_created', (data) {
+          debugPrint("AdminInspectionsScreen: SOCKET RAW DATA: $data");
+
+          try {
+            final newInspection = Map<String, dynamic>.from(data);
+            debugPrint("AdminInspectionsScreen: Parsed new inspection: $newInspection");
+            inspectionProvider.addInspection(newInspection);
+          } catch (e) {
+            debugPrint("AdminInspectionsScreen: Failed to parse inspection_created payload: $e");
+          }
+        });
+
+        _isSubscribed = true;
+      });
     }
   }
 
   @override
+  void dispose() {
+    if(mounted){
+    final socketProvider = context.read<SocketProvider>();
+    socketProvider.offEvent('inspection_created'); 
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final inspectionProvider = context.watch<InspectionHistoryProvider>();
+
     return Scaffold(
       appBar: AppBar(title: const Text("Inspection History")),
-      body: _loading
+      body: inspectionProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text(_error!))
-              : _inspections.isEmpty
+          : inspectionProvider.error.isNotEmpty
+              ? Center(child: Text(inspectionProvider.error))
+              : inspectionProvider.history.isEmpty
                   ? const Center(child: Text("No inspections found"))
                   : RefreshIndicator(
-                      onRefresh: _fetchInspections,
+                      onRefresh: () async {
+                        final token = context.read<AuthProvider>().token;
+                        if (token != null) {
+                          debugPrint("AdminInspectionsScreen: Refreshing inspection history...");
+                          await inspectionProvider.fetchHistory(token);
+                        }
+                      },
                       child: ListView.builder(
-                        itemCount: _inspections.length,
+                        itemCount: inspectionProvider.history.length,
                         itemBuilder: (context, index) {
-                          final inspection = _inspections[index];
+                          final inspection = inspectionProvider.history[index];
                           return ListTile(
                             leading: const Icon(Icons.assignment),
                             title: Text(
