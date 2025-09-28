@@ -13,7 +13,6 @@ class AppLifeCycleHandler extends StatefulWidget {
 
 class _AppLifeCycleHandlerState extends State<AppLifeCycleHandler>
     with WidgetsBindingObserver {
-
   @override
   void initState() {
     super.initState();
@@ -28,6 +27,7 @@ class _AppLifeCycleHandlerState extends State<AppLifeCycleHandler>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
+    super.didChangeAppLifecycleState(state);
     final authProvider = context.read<AuthProvider>();
 
     if (state == AppLifecycleState.resumed) {

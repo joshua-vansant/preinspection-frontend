@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/organization_service.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class AuthProvider extends ChangeNotifier {
   String? _token;
@@ -59,6 +60,17 @@ class AuthProvider extends ChangeNotifier {
 
   void setUser(Map<String, dynamic>? userData) {
     _user = userData;
+    if (_user != null) {
+    Sentry.configureScope((scope) {
+      scope.setUser(SentryUser(
+        id: _user!['id'].toString(),
+        email: _user!['email'],
+        username: _user!['first_name'] + ' ' + _user!['last_name'],
+      ));
+    });
+  } else {
+    Sentry.configureScope((scope) => scope.setUser(null));
+  }
     notifyListeners();
   }
 

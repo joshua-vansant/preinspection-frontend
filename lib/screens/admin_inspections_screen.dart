@@ -13,7 +13,7 @@ class AdminInspectionsScreen extends StatefulWidget {
 
 class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
   bool _isSubscribed = false;
-  late SocketProvider _socketProvider; // cache here
+  late SocketProvider _socketProvider;
 
   @override
   void didChangeDependencies() {
@@ -23,7 +23,7 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final token = context.read<AuthProvider>().token;
         final inspectionProvider = context.read<InspectionHistoryProvider>();
-        _socketProvider = context.read<SocketProvider>(); // cache it
+        _socketProvider = context.read<SocketProvider>();
 
         if (token != null) {
           debugPrint("AdminInspectionsScreen: Fetching initial inspection history...");
