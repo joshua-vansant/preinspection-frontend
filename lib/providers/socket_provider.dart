@@ -110,6 +110,14 @@ class SocketProvider extends ChangeNotifier {
     }
   }
 
+  void reconnectIfNeeded() {
+  if (_socket == null || !_socket!.connected) {
+    debugPrint("Reconnecting socket...");
+    _initSocket(); // safe to call again, it checks if _socket != null
+    }
+  }
+
+
   void disconnect() {
     debugPrint("SocketProvider: Manual disconnect called.");
     _socket?.disconnect();

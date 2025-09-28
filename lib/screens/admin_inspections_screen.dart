@@ -13,6 +13,7 @@ class AdminInspectionsScreen extends StatefulWidget {
 
 class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
   bool _isSubscribed = false;
+  late SocketProvider _socketProvider; // cache here
 
   @override
   void didChangeDependencies() {
@@ -22,7 +23,7 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final token = context.read<AuthProvider>().token;
         final inspectionProvider = context.read<InspectionHistoryProvider>();
-        final socketProvider = context.read<SocketProvider>();
+        _socketProvider = context.read<SocketProvider>(); // cache it
 
         if (token != null) {
           debugPrint("AdminInspectionsScreen: Fetching initial inspection history...");
@@ -30,7 +31,7 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
         }
 
         // Subscribe to new inspection events
-        socketProvider.onEvent('inspection_created', (data) {
+        _socketProvider.onEvent('inspection_created', (data) {
           debugPrint("AdminInspectionsScreen: SOCKET RAW DATA: $data");
 
           try {
@@ -49,12 +50,11 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
 
   @override
   void dispose() {
-    if(mounted){
-    final socketProvider = context.read<SocketProvider>();
-    socketProvider.offEvent('inspection_created'); 
-    }
+    // use cached provider instead of context.read
+    _socketProvider.offEvent('inspection_created');
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {

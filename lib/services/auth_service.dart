@@ -52,4 +52,36 @@ class AuthService {
       throw Exception(error);
     }
   }
+
+  static Future<Map<String, dynamic>> refreshToken(String oldToken) async {
+    final response = await http.post(
+      Uri.parse("${ApiConfig.baseUrl}/auth/refresh"),
+      headers: {
+        ...ApiConfig.headers(),
+        'Authorization': 'Bearer $oldToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      throw Exception("Unexpected response format: ${response.body}");
+    } else {
+      throw Exception('Failed to refresh token: ${response.body}');
+    }
+  }
+
+  static Future<void> logout(String token) async {
+    try {
+      await http.post(
+        Uri.parse("${ApiConfig.baseUrl}/auth/logout"),
+        headers: {
+          ...ApiConfig.headers(),
+          'Authorization': 'Bearer $token',
+        },
+      );
+    } catch (_) {
+      // ignore network errors on logout
+    }
+  }
 }

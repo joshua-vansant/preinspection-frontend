@@ -25,6 +25,13 @@ class InspectionHistoryProvider extends ChangeNotifier {
 
     try {
       _history = await InspectionService.getInspectionHistory(token);
+
+      _history.sort((a, b) {
+        final aDate = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+        final bDate = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+        return bDate.compareTo(aDate); //return newest first
+      });
+      
     } catch (e) {
       _history = [];
       _error = 'Failed to fetch inspection history: $e';

@@ -6,6 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/vehicle_provider.dart';
 import 'providers/inspection_history_provider.dart';
 import 'providers/socket_provider.dart';
+import 'widgets/app_lifecycle_handler.dart';
 
 void main() {
   runApp(
@@ -36,7 +37,7 @@ void main() {
           },
         ),
       ],
-      child: const MyApp(),
+      child: AppLifeCycleHandler(child: MyApp()),
     ),
   );
 }

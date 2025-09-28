@@ -36,11 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final token = result['access_token'];
       final userData = result['user'];
+      final expiresIn = result['expires_in'];
       final role = userData['role'] as String;
 
       if (token != null && role != null) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        authProvider.setToken(token, role, userData: userData);
+        authProvider.setToken(token, role, userData: userData, expiresIn: expiresIn);
       }
 
       // Fetch org data if available
