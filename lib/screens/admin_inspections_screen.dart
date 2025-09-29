@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/inspection_history_provider.dart';
 import '../providers/socket_provider.dart';
+import 'package:frontend/utils/date_time_utils.dart';
 
 class AdminInspectionsScreen extends StatefulWidget {
   const AdminInspectionsScreen({super.key});
@@ -82,9 +83,7 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
                         itemBuilder: (context, index) {
                           
                           final inspection = inspectionProvider.history[index];
-                          final createdAtUtc = DateTime.parse(inspection['created_at']!).toUtc();
-                          final createdAtLocal = createdAtUtc.toLocal();
-                          final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAtLocal);
+                          final formattedDate = parseUtcToLocal(inspection['created_at']);
 
                           return ListTile(
                             leading: const Icon(Icons.assignment),

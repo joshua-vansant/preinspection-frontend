@@ -15,6 +15,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:frontend/screens/admin_inspections_screen.dart';
 import 'admin_vehicle_screen.dart';
 import '../providers/socket_provider.dart';
+import 'package:frontend/utils/date_time_utils.dart';
 
 
 class DashboardScreen extends StatelessWidget {
@@ -210,10 +211,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                             itemCount: _history.length,
                             itemBuilder: (_, index) {
                               final item = _history[index];
-                              final createdAtUtc = DateTime.parse(item['created_at']!).toUtc();
-                              final createdAtLocal = createdAtUtc.toLocal();
-                              final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAtLocal);
-
+                              final formattedDate = parseUtcToLocal(item['created_at']);
 
                               final driverName = item['driver'] != null
                                   ? item['driver']['full_name']

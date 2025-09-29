@@ -4,14 +4,8 @@ import '../providers/auth_provider.dart';
 import 'inspection_form_screen.dart';
 import 'package:intl/intl.dart';
 import '../services/inspection_service.dart';
+import 'package:frontend/utils/date_time_utils.dart';
 
-DateTime parseUtcToLocal(String timestamp) {
-  // Ensure the timestamp is treated as UTC if no timezone is present
-  DateTime utcTime =
-      DateTime.tryParse(timestamp + 'Z') ?? DateTime.now().toUtc();
-  if (!utcTime.isUtc) utcTime = utcTime.toUtc();
-  return utcTime.toLocal();
-}
 
 class InspectionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> inspection;
@@ -23,8 +17,9 @@ class InspectionDetailScreen extends StatelessWidget {
     final results = inspection['results'] as Map<String, dynamic>? ?? {};
 
     final createdAt = parseUtcToLocal(
-      inspection['created_at'] ?? DateTime.now().toIso8601String(),
+      inspection['created_at'] ?? DateTime.now().toIso8601String(), asDateTime: true,
     );
+    
     final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
 
     // Editable within 30 minutes of creation
