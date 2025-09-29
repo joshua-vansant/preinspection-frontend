@@ -38,26 +38,35 @@ class VehicleProvider extends ChangeNotifier {
     }
   }
 
-  /// Add a new vehicle
-  Future<void> addVehicle(
-    String token,
-    Map<String, dynamic> vehicleData,
-  ) async {
-    final vehicle = await VehicleService.addVehicle(
-      token: token,
-      number: vehicleData['number'],
-      make: vehicleData['make'],
-      model: vehicleData['model'],
-      year: vehicleData['year'],
-      vin: vehicleData['vin'],
-      licensePlate: vehicleData['license_plate'],
-      mileage: vehicleData['mileage'],
-      status: vehicleData['status'],
-      orgId: vehicleData['org_id'],
-    );
-    _vehicles.add(vehicle);
-    notifyListeners();
-  }
+Future<void> addVehicle(
+  String token,
+  {required String licensePlate, // ← required
+   String? number,
+   String? make,
+   String? model,
+   int? year,
+   String? vin,
+   int? mileage,
+   String? status,
+   int? orgId,}
+) async {
+  final vehicle = await VehicleService.addVehicle(
+    token: token,
+    licensePlate: licensePlate, // always pass
+    number: number,
+    make: make,
+    model: model,
+    year: year,
+    vin: vin,
+    mileage: mileage,
+    status: status,
+    orgId: orgId,
+  );
+
+  _vehicles.add(vehicle);
+  notifyListeners();
+}
+
 
   /// Update an existing vehicle
   Future<void> updateVehicle(

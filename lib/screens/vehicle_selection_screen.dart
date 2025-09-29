@@ -5,6 +5,7 @@ import '../providers/vehicle_provider.dart';
 import '../services/vehicle_service.dart';
 import 'template_selection_screen.dart';
 import '../services/inspection_service.dart';
+import 'add_vehicle_screen.dart';
 
 class VehicleSelectionScreen extends StatefulWidget {
   const VehicleSelectionScreen({super.key});
@@ -43,13 +44,11 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
   Future<void> selectVehicle(Map<String, dynamic> vehicle) async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Not authenticated')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Not authenticated')));
       return;
     }
 
-    // show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -95,32 +94,40 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("Select Vehicle")),
-      body: ListView.builder(
-        itemCount: vehicles.length,
-        itemBuilder: (_, index) {
-          final vehicle = vehicles[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            child: ListTile(
-              title: Text(
-                "${vehicle['number']} (${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''})",
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Year: ${vehicle['year'] ?? '-'}"),
-                  if (vehicle['license_plate'] != null)
-                    Text("Plate: ${vehicle['license_plate']}"),
-                  if (vehicle['vin'] != null) Text("VIN: ${vehicle['vin']}"),
-                  if (vehicle['mileage'] != null)
-                    Text("Mileage: ${vehicle['mileage']}"),
-                  Text("Status: ${vehicle['status'] ?? 'unknown'}"),
-                ],
-              ),
-              onTap: () => selectVehicle(vehicle),
+      body: vehicles.isEmpty
+          ? const Center(child: Text("No vehicles yet. Add one to continue."))
+          : ListView.builder(
+              itemCount: vehicles.length,
+              itemBuilder: (_, index) {
+                final vehicle = vehicles[index];
+                final licensePlate = vehicle['license_plate'] ?? '';
+                final makeModel =
+                    "${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''}".trim();
+
+                return Card(
+                  child: ListTile(
+                    title: Text("$licensePlate ${makeModel.isNotEmpty ? '($makeModel)' : ''}"),
+                    onTap: () => selectVehicle(vehicle),
+                  ),
+                );
+              },
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final Map<String, dynamic>? newVehicle =
+              await Navigator.push<Map<String, dynamic>>(
+            context,
+            MaterialPageRoute(builder: (_) => const AddVehicleScreen()),
           );
+
+          if (newVehicle != null) {
+            final token = context.read<AuthProvider>().token;
+            if (token != null) {
+              await context.read<VehicleProvider>().addVehicle(token, licensePlate: newVehicle["license_plate"]);
+            }
+          }
         },
+        child: const Icon(Icons.add),
       ),
     );
   }

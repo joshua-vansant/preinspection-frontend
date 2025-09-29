@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/inspection_history_provider.dart';
@@ -79,7 +80,12 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
                       child: ListView.builder(
                         itemCount: inspectionProvider.history.length,
                         itemBuilder: (context, index) {
+                          
                           final inspection = inspectionProvider.history[index];
+                          final createdAtUtc = DateTime.parse(inspection['created_at']!).toUtc();
+                          final createdAtLocal = createdAtUtc.toLocal();
+                          final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAtLocal);
+
                           return ListTile(
                             leading: const Icon(Icons.assignment),
                             title: Text(
@@ -87,8 +93,8 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
-                              "Date: ${inspection['created_at'] ?? 'Unknown'}\n"
-                              "Driver: ${inspection['driver_name'] ?? 'N/A'}",
+                              "Date: $formattedDate\n"
+                              "Driver: ${inspection['driver'] != null ? inspection['driver']['full_name'] : 'N/A'}",
                             ),
                             isThreeLine: true,
                           );

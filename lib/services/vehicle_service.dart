@@ -45,47 +45,48 @@ class VehicleService {
     }
   }
 
-  /// Add a new vehicle
-  static Future<Map<String, dynamic>> addVehicle({
-    required String token,
-    required String number,
-    String? make,
-    String? model,
-    int? year,
-    String? vin,
-    String? licensePlate,
-    int? mileage,
-    String? status,
-    int? orgId, // admin-only
-  }) async {
-    final Uri url = Uri.parse('${ApiConfig.baseUrl}/vehicles/add');
+/// Add a new vehicle
+static Future<Map<String, dynamic>> addVehicle({
+  required String token,
+  required String licensePlate, // ← required now
+  String? number,
+  String? make,
+  String? model,
+  int? year,
+  String? vin,
+  int? mileage,
+  String? status,
+  int? orgId, // admin-only
+}) async {
+  final Uri url = Uri.parse('${ApiConfig.baseUrl}/vehicles/add');
 
-    final body = {
-      'number': number,
-      if (make != null) 'make': make,
-      if (model != null) 'model': model,
-      if (year != null) 'year': year,
-      if (vin != null) 'vin': vin,
-      if (licensePlate != null) 'license_plate': licensePlate,
-      if (mileage != null) 'mileage': mileage,
-      if (status != null) 'status': status,
-      if (orgId != null) 'org_id': orgId,
-    };
+  final body = {
+    'license_plate': licensePlate, // must always be sent
+    if (number != null) 'number': number,
+    if (make != null) 'make': make,
+    if (model != null) 'model': model,
+    if (year != null) 'year': year,
+    if (vin != null) 'vin': vin,
+    if (mileage != null) 'mileage': mileage,
+    if (status != null) 'status': status,
+    if (orgId != null) 'org_id': orgId,
+  };
 
-    final response = await http.post(
-      url,
-      headers: ApiConfig.headers(token: token),
-      body: jsonEncode(body),
+  final response = await http.post(
+    url,
+    headers: ApiConfig.headers(token: token),
+    body: jsonEncode(body),
+  );
+
+  if (response.statusCode == 201) {
+    return Map<String, dynamic>.from(jsonDecode(response.body)['vehicle']);
+  } else {
+    throw Exception(
+      'Failed to add vehicle: ${response.statusCode} ${response.body}',
     );
-
-    if (response.statusCode == 201) {
-      return Map<String, dynamic>.from(jsonDecode(response.body)['vehicle']);
-    } else {
-      throw Exception(
-        'Failed to add vehicle: ${response.statusCode} ${response.body}',
-      );
-    }
   }
+}
+
 
   /// Update a vehicle (admin-only)
   static Future<Map<String, dynamic>> updateVehicle({

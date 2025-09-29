@@ -13,6 +13,8 @@ import '../widgets/invite_driver_widget.dart';
 import '../config/api_config.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:frontend/screens/admin_inspections_screen.dart';
+import 'admin_vehicle_screen.dart';
+import '../providers/socket_provider.dart';
 
 
 class DashboardScreen extends StatelessWidget {
@@ -57,20 +59,113 @@ class DashboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: role == 'admin' ? AdminDashboard() : _DriverDashboard(),
+          child: role == 'admin' ? AdminDashboard() : DriverDashboard(),
         ),
       ),
     );
   }
 }
 
-class _DriverDashboard extends StatelessWidget {
-  const _DriverDashboard({super.key});
+
+class DriverDashboard extends StatefulWidget {
+  const DriverDashboard({super.key});
+
+  @override
+  State<DriverDashboard> createState() => _DriverDashboardState();
+}
+
+class _DriverDashboardState extends State<DriverDashboard> {
+  List<Map<String, dynamic>> _history = [];
+  bool _isLoading = true;
+  String? _error;
+
+  AuthProvider? _authProvider;
+  SocketProvider? _socketProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    // Delay initialization until context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _authProvider = context.read<AuthProvider>();
+      _socketProvider = context.read<SocketProvider>();
+
+      // Only fetch if token exists
+      if (_authProvider?.token != null) {
+        _fetchHistory();
+        _subscribeToSocket();
+      } else {
+        setState(() {
+          _error = "Authentication token not available.";
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _fetchHistory() async {
+    if (_authProvider?.token == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final history = await InspectionService.getInspectionHistory(
+        _authProvider!.token!,
+      );
+
+      // Sort by created_at descending
+      history.sort((a, b) {
+        final aDate = a['created_at'] != null
+            ? DateTime.tryParse(a['created_at'])
+            : null;
+        final bDate = b['created_at'] != null
+            ? DateTime.tryParse(b['created_at'])
+            : null;
+        if (aDate == null && bDate == null) return 0;
+        if (aDate == null) return 1;
+        if (bDate == null) return -1;
+        return bDate.compareTo(aDate);
+      });
+
+      setState(() {
+        _history = history;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = "Failed to load inspections: $e";
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _subscribeToSocket() {
+    _socketProvider?.onEvent('inspection_created', (data) {
+      final inspection = Map<String, dynamic>.from(data);
+      final driverId = _authProvider?.user?['id'];
+      if (driverId != null &&
+          inspection['driver'] != null &&
+          inspection['driver']['id'] == driverId) {
+        setState(() {
+          _history.insert(0, inspection);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _socketProvider?.offEvent('inspection_created');
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final org = authProvider.org;
+    final user = _authProvider?.user;
+    final org = _authProvider?.org;
 
     return Column(
       children: [
@@ -78,17 +173,18 @@ class _DriverDashboard extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const VehicleSelectionScreen()),
+              MaterialPageRoute(
+                  builder: (_) => const VehicleSelectionScreen()),
             );
           },
           child: const Text("Start New Inspection"),
         ),
         const SizedBox(height: 16),
-        if (authProvider.user != null)
+        if (user != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
-              "Welcome, ${authProvider.user!['first_name']} ${authProvider.user!['last_name']}",
+              "Welcome, ${user['first_name']} ${user['last_name']}",
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -100,60 +196,56 @@ class _DriverDashboard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-
         const SizedBox(height: 16),
         Expanded(
-          child: authProvider.token == null
-              ? const Center(child: Text('Please log in to view inspections.'))
-              : FutureBuilder<List<Map<String, dynamic>>>(
-                  future: InspectionService.getInspectionHistory(
-                    authProvider.token!,
-                  ),
-                  builder: (_, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No inspections yet.'));
-                    }
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(child: Text('Error: $_error'))
+                  : _history.isEmpty
+                      ? const Center(child: Text('No inspections yet.'))
+                      : RefreshIndicator(
+                          onRefresh: _fetchHistory,
+                          child: ListView.builder(
+                            itemCount: _history.length,
+                            itemBuilder: (_, index) {
+                              final item = _history[index];
+                              final createdAtUtc = DateTime.parse(item['created_at']!).toUtc();
+                              final createdAtLocal = createdAtUtc.toLocal();
+                              final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAtLocal);
 
-                    final history = snapshot.data!;
-                    history.sort(
-                      (a, b) => b['created_at'].compareTo(a['created_at']),
-                    );
 
-                    return ListView.builder(
-                      itemCount: history.length,
-                      itemBuilder: (_, index) {
-                        final item = history[index];
-                        final createdAt = parseUtcToLocal(item['created_at']);
-                        final formattedDate = DateFormat(
-                          'MMM d, yyyy - h:mm a',
-                        ).format(createdAt);
+                              final driverName = item['driver'] != null
+                                  ? item['driver']['full_name']
+                                  : 'N/A';
 
-                        return ListTile(
-                          title: Text('Inspection #${item['id']}'),
-                          subtitle: Text('Date: $formattedDate'),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    InspectionDetailScreen(inspection: item),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
+                              return ListTile(
+                                title: Text('Inspection #${item['id']}'),
+                                subtitle: Text(
+                                  'Date: $formattedDate\nDriver: $driverName',
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => InspectionDetailScreen(
+                                          inspection: item),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
         ),
       ],
     );
   }
 }
+
+
+
+
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -286,6 +378,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: const Text("View Inspections"),
         ),
         const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminVehiclesScreen()),
+            );
+          },
+          child: const Text('Manage Vehicles'),
+        ),
         Expanded(
           child: Container(
             color: Colors.grey[200],
