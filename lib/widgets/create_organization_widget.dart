@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
+import 'package:frontend/utils/ui_helpers.dart';
+
 
 class CreateOrganizationWidget extends StatefulWidget {
   final void Function(Map<String, dynamic> organization)? onCreated;
@@ -28,19 +30,15 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
     final token = authProvider.token;
 
     if (token == null || token.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You are not authenticated')),
-      );
+      if (!mounted) return;
+      UIHelpers.showError(context, "Error leaving org. Try logging in again.");
       return;
     }
 
     final name = _nameController.text.trim();
     if (name.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Organization name must be at least 3 characters'),
-        ),
-      );
+      if (!mounted) return;
+      UIHelpers.showError(context, "Organization name must be at least 3 characters");
       return;
     }
 
@@ -55,9 +53,8 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
       // Callback for dashboard refresh
       if (widget.onCreated != null) widget.onCreated!(org['organization']);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating organization: $e')),
-      );
+      if (!mounted) return;
+      UIHelpers.showError(context, "Error creating organization: $e");
     } finally {
       if (mounted) setState(() => _creating = false);
     }

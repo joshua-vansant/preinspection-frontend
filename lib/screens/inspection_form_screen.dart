@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../providers/inspection_provider.dart';
 import 'dashboard_screen.dart';
 import 'package:frontend/services/inspection_service.dart';
+import '../utils/ui_helpers.dart';
 
 class InspectionFormScreen extends StatefulWidget {
   final Map<String, dynamic> inspection;
@@ -58,9 +59,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
           type: widget.inspectionType ?? 'pre-trip',
           template: widget.inspection,
         );
-
-        // Prefill mileage from last inspection
-        // await _prefillMileage();
       }
 
       // Sync controllers with currentInspection
@@ -69,35 +67,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     });
   }
 
-  // Future<void> _prefillMileage() async {
-  //   final token = context.read<AuthProvider>().token;
-  //   if (token == null || widget.vehicleId == null) return;
-
-  //   try {
-  //     final lastInspection =
-  //         await InspectionService.getLastInspection(token, widget.vehicleId!);
-
-  //     if (lastInspection == null) return;
-
-  //     final inspectionProvider = context.read<InspectionProvider>();
-  //     final type = widget.inspectionType ?? 'pre-trip';
-
-  //     // Prefill start mileage
-  //     int prefillMileage = 0;
-
-  //     // Use last inspection's start_mileage if available
-  //     if (lastInspection['start_mileage'] != null) {
-  //       prefillMileage = lastInspection['start_mileage'] as int;
-  //     }
-
-  //     print("[DEBUG] Prefilling start mileage with: $prefillMileage");
-
-  //     startMileageController.text = prefillMileage.toString();
-  //     inspectionProvider.updateField('start_mileage', prefillMileage);
-  //   } catch (e) {
-  //     debugPrint("Error fetching last inspection: $e");
-  //   }
-  // }
 
   /// Submit inspection with validation
   Future<void> _submitInspection() async {
@@ -111,9 +80,7 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
 
     inspectionProvider.updateField('start_mileage', startMileage);
     inspectionProvider.updateField('notes', notesController.text.trim());
-    inspectionProvider.updateField(
-      'fuel_notes',
-      fuelNotesController.text.trim(),
+    inspectionProvider.updateField('fuel_notes', fuelNotesController.text.trim(),
     );
 
     final success = widget.editMode && widget.inspection.containsKey('id')
@@ -126,26 +93,14 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.editMode ? "Inspection updated" : "Inspection submitted",
-          ),
-        ),
-      );
+      UIHelpers.showSuccess(context, widget.editMode ? "Inspection updated" : "Inspection submitted");
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
         (route) => false,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Error submitting inspection: ${inspectionProvider.error}",
-          ),
-        ),
-      );
+      UIHelpers.showError(context, inspectionProvider.error);
     }
   }
 

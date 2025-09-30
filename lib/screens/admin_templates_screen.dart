@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../services/template_service.dart';
 import 'edit_template_screen.dart';
 import 'create_template_screen.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 
 class AdminTemplatesScreen extends StatefulWidget {
   const AdminTemplatesScreen({super.key});
@@ -25,15 +26,12 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
       final result = await TemplateService.getTemplates(token);
       setState(() => templates = result);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error fetching templates: $e")));
-      }
-    } finally {
-      if (mounted) setState(() => loading = false);
+        if (!mounted) return;
+        UIHelpers.showError(context, e.toString());
+      } finally {
+            if (mounted) setState(() => loading = false);
+          }
     }
-  }
 
   @override
   void initState() {

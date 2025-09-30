@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/template_service.dart';
@@ -71,11 +72,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
         .toList();
 
     if (nameController.text.trim().isEmpty || items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter a name and at least one item"),
-        ),
-      );
+      UIHelpers.showError(context, "Please enter a name and at least one item");
       return;
     }
 
@@ -97,9 +94,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error updating template: $e")));
+      UIHelpers.showError(context, e.toString());
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -144,9 +139,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error deleting template: $e")));
+      UIHelpers.showError(context, e.toString());
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -154,7 +147,8 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text("Edit Template"),
         actions: [
@@ -266,6 +260,7 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 }

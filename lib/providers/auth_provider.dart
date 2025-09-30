@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/organization_service.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import '../utils/ui_helpers.dart';
 
 class AuthProvider extends ChangeNotifier {
   String? _token;
@@ -9,11 +10,14 @@ class AuthProvider extends ChangeNotifier {
   String? _role;
   Map<String, dynamic>? _org;
   Map<String, dynamic>? _user;
+  String? _error;
 
+  // Getters
   String? get token => _token;
   String? get role => _role;
   Map<String, dynamic>? get org => _org;
   Map<String, dynamic>? get user => _user;
+  String? get error => _error;
 
   bool get isAuth {
     if (tokenExpiry == null || _token == null) return false;
@@ -37,9 +41,11 @@ class AuthProvider extends ChangeNotifier {
     try {
       final fetchedOrg = await OrganizationService.getMyOrg(_token!);
       _org = fetchedOrg;
+      _error = null;
       notifyListeners();
     } catch (e) {
       _org = null;
+      _error = UIHelpers.parseError(e.toString());
       notifyListeners();
     }
   }
@@ -51,7 +57,7 @@ class AuthProvider extends ChangeNotifier {
 
     if (expiresIn != null) {
       tokenExpiry = DateTime.now().add(Duration(seconds: expiresIn));
-      _scheduleTokenRefresh(); // schedule auto refresh
+      _scheduleTokenRefresh();
     }
 
     if (userData != null) setUser(userData);
@@ -61,16 +67,16 @@ class AuthProvider extends ChangeNotifier {
   void setUser(Map<String, dynamic>? userData) {
     _user = userData;
     if (_user != null) {
-    Sentry.configureScope((scope) {
-      scope.setUser(SentryUser(
-        id: _user!['id'].toString(),
-        email: _user!['email'],
-        username: _user!['first_name'] + ' ' + _user!['last_name'],
-      ));
-    });
-  } else {
-    Sentry.configureScope((scope) => scope.setUser(null));
-  }
+      Sentry.configureScope((scope) {
+        scope.setUser(SentryUser(
+          id: _user!['id'].toString(),
+          email: _user!['email'],
+          username: _user!['first_name'] + ' ' + _user!['last_name'],
+        ));
+      });
+    } else {
+      Sentry.configureScope((scope) => scope.setUser(null));
+    }
     notifyListeners();
   }
 
@@ -79,12 +85,17 @@ class AuthProvider extends ChangeNotifier {
     _role = null;
     _user = null;
     tokenExpiry = null;
+    _error = null;
     notifyListeners();
   }
 
   Future<void> logout() async {
     if (_token != null) {
-      await AuthService.logout(_token!);
+      try {
+        await AuthService.logout(_token!);
+      } catch (e) {
+        _error = UIHelpers.parseError(e.toString());
+      }
     }
     clearToken();
   }
@@ -92,15 +103,21 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshToken() async {
     if (_token == null) throw Exception("No token to refresh");
 
-    final result = await AuthService.refreshToken(_token!);
-    final newToken = result['access_token'];
-    final role = result['role'] ?? _role;
-    final expiresIn = result['expires_in'];
+    try {
+      final result = await AuthService.refreshToken(_token!);
+      final newToken = result['access_token'];
+      final role = result['role'] ?? _role;
+      final expiresIn = result['expires_in'];
 
-    if (newToken == null) throw Exception("No token in refresh response");
+      if (newToken == null) throw Exception("No token in refresh response");
 
-    setToken(newToken, role, expiresIn: expiresIn);
-    debugPrint("Token refreshed and updated");
+      setToken(newToken, role, expiresIn: expiresIn);
+      debugPrint("Token refreshed and updated");
+      _error = null;
+    } catch (e) {
+      _error = UIHelpers.parseError(e.toString());
+      rethrow;
+    }
   }
 
   /// Checks if token needs refresh and refreshes proactively
@@ -116,12 +133,11 @@ class AuthProvider extends ChangeNotifier {
         await refreshToken();
         return true;
       } catch (e) {
-        debugPrint("Token refresh failed: $e");
+        debugPrint("Token refresh failed: $_error");
         await logout();
         return false;
       }
     }
-
     return true; // still valid
   }
 
@@ -139,9 +155,9 @@ class AuthProvider extends ChangeNotifier {
       if (_token != null) {
         try {
           await refreshToken();
-          _scheduleTokenRefresh(); // reschedule for next expiry
+          _scheduleTokenRefresh();
         } catch (e) {
-          debugPrint("Auto token refresh failed: $e");
+          debugPrint("Auto token refresh failed: $_error");
           await logout();
         }
       }

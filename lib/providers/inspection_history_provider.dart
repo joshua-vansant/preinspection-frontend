@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/inspection_service.dart';
 import 'socket_provider.dart';
+import '../utils/ui_helpers.dart';
 
 class InspectionHistoryProvider extends ChangeNotifier {
   final SocketProvider socketProvider;
@@ -29,13 +30,12 @@ class InspectionHistoryProvider extends ChangeNotifier {
       _history.sort((a, b) {
         final aDate = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
         final bDate = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
-        return bDate.compareTo(aDate); //return newest first
+        return bDate.compareTo(aDate); // newest first
       });
-      
     } catch (e) {
       _history = [];
-      _error = 'Failed to fetch inspection history: $e';
-      debugPrint(_error);
+      _error = UIHelpers.parseError(e.toString());
+      debugPrint('InspectionHistory error: $_error');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -54,7 +54,7 @@ class InspectionHistoryProvider extends ChangeNotifier {
     final existingIndex =
         _history.indexWhere((i) => i['id'] == inspection['id']);
     if (existingIndex == -1) {
-      _history.insert(0, inspection); 
+      _history.insert(0, inspection);
     } else {
       _history[existingIndex] = inspection;
     }

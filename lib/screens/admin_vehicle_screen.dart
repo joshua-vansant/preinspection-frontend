@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/vehicle_provider.dart';
@@ -32,10 +33,8 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
 
       setState(() => isLoading = false);
     } catch (e) {
-      setState(() {
-        error = 'Failed to load vehicles: $e';
-        isLoading = false;
-      });
+      if(!mounted) return;
+      UIHelpers.showError(context, e.toString());
     }
   }
 

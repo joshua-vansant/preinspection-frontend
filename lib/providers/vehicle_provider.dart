@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/vehicle_service.dart';
+import '../utils/ui_helpers.dart';
 
 class VehicleProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _vehicles = [];
@@ -28,75 +29,96 @@ class VehicleProvider extends ChangeNotifier {
   }
 
   /// Fetch vehicles from the backend and update provider
-  Future<void> fetchVehicles(String token) async {
+  Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     try {
       final result = await VehicleService.getVehicles(token);
       _vehicles = result;
       notifyListeners();
     } catch (e) {
-      rethrow;
+      final errorMessage = UIHelpers.parseError(e.toString());
+      if (context != null) UIHelpers.showError(context, errorMessage);
+      debugPrint("VehicleProvider fetchVehicles error: $errorMessage");
     }
   }
 
-Future<void> addVehicle(
-  String token,
-  {required String licensePlate, // ← required
-   String? number,
-   String? make,
-   String? model,
-   int? year,
-   String? vin,
-   int? mileage,
-   String? status,
-   int? orgId,}
-) async {
-  final vehicle = await VehicleService.addVehicle(
-    token: token,
-    licensePlate: licensePlate, // always pass
-    number: number,
-    make: make,
-    model: model,
-    year: year,
-    vin: vin,
-    mileage: mileage,
-    status: status,
-    orgId: orgId,
-  );
-
-  _vehicles.add(vehicle);
-  notifyListeners();
-}
-
+  /// Add a new vehicle
+  Future<void> addVehicle(
+    String token, {
+    required String licensePlate,
+    String? number,
+    String? make,
+    String? model,
+    int? year,
+    String? vin,
+    int? mileage,
+    String? status,
+    int? orgId,
+    BuildContext? context,
+  }) async {
+    try {
+      final vehicle = await VehicleService.addVehicle(
+        token: token,
+        licensePlate: licensePlate,
+        number: number,
+        make: make,
+        model: model,
+        year: year,
+        vin: vin,
+        mileage: mileage,
+        status: status,
+        orgId: orgId,
+      );
+      _vehicles.add(vehicle);
+      notifyListeners();
+    } catch (e) {
+      final errorMessage = UIHelpers.parseError(e.toString());
+      if (context != null) UIHelpers.showError(context, errorMessage);
+      debugPrint("VehicleProvider addVehicle error: $errorMessage");
+    }
+  }
 
   /// Update an existing vehicle
   Future<void> updateVehicle(
     String token,
     int vehicleId,
-    Map<String, dynamic> updatedData,
-  ) async {
-    final updatedVehicle = await VehicleService.updateVehicle(
-      token: token,
-      vehicleId: vehicleId,
-      number: updatedData['number'],
-      make: updatedData['make'],
-      model: updatedData['model'],
-      year: updatedData['year'],
-      vin: updatedData['vin'],
-      licensePlate: updatedData['license_plate'],
-      mileage: updatedData['mileage'],
-      status: updatedData['status'],
-      orgId: updatedData['org_id'],
-    );
-    final index = _vehicles.indexWhere((v) => v['id'] == vehicleId);
-    if (index != -1) _vehicles[index] = updatedVehicle;
-    notifyListeners();
+    Map<String, dynamic> updatedData, {
+    BuildContext? context,
+  }) async {
+    try {
+      final updatedVehicle = await VehicleService.updateVehicle(
+        token: token,
+        vehicleId: vehicleId,
+        number: updatedData['number'],
+        make: updatedData['make'],
+        model: updatedData['model'],
+        year: updatedData['year'],
+        vin: updatedData['vin'],
+        licensePlate: updatedData['license_plate'],
+        mileage: updatedData['mileage'],
+        status: updatedData['status'],
+        orgId: updatedData['org_id'],
+      );
+      final index = _vehicles.indexWhere((v) => v['id'] == vehicleId);
+      if (index != -1) _vehicles[index] = updatedVehicle;
+      notifyListeners();
+    } catch (e) {
+      final errorMessage = UIHelpers.parseError(e.toString());
+      if (context != null) UIHelpers.showError(context, errorMessage);
+      debugPrint("VehicleProvider updateVehicle error: $errorMessage");
+    }
   }
 
   /// Delete a vehicle
-  Future<void> deleteVehicle(String token, int vehicleId) async {
-    await VehicleService.deleteVehicle(token, vehicleId);
-    _vehicles.removeWhere((v) => v['id'] == vehicleId);
-    if (_selectedVehicle?['id'] == vehicleId) _selectedVehicle = null;
-    notifyListeners();
+  Future<void> deleteVehicle(String token, int vehicleId, {BuildContext? context}) async {
+    try {
+      await VehicleService.deleteVehicle(token, vehicleId);
+      _vehicles.removeWhere((v) => v['id'] == vehicleId);
+      if (_selectedVehicle?['id'] == vehicleId) _selectedVehicle = null;
+      notifyListeners();
+    } catch (e) {
+      final errorMessage = UIHelpers.parseError(e.toString());
+      if (context != null) UIHelpers.showError(context, errorMessage);
+      debugPrint("VehicleProvider deleteVehicle error: $errorMessage");
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/template_service.dart';
@@ -54,11 +55,8 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
         .toList();
 
     if (nameController.text.trim().isEmpty || items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter a name and at least one item"),
-        ),
-      );
+      if (!mounted) return;
+      UIHelpers.showError(context, "Please enter a name and at least one item");
       return;
     }
 
@@ -79,9 +77,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error creating template: $e")));
+      UIHelpers.showError(context, e.toString());
     } finally {
       if (mounted) setState(() => creating = false);
     }
@@ -89,7 +85,8 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text("Create Template"),
         actions: [
@@ -196,6 +193,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                 ],
               ),
             ),
+    ),
     );
   }
 }

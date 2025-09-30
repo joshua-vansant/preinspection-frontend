@@ -5,7 +5,9 @@ import '../services/organization_service.dart';
 import 'create_organization_widget.dart';
 import 'package:frontend/screens/admin_templates_screen.dart';
 import 'package:frontend/screens/admin_vehicle_screen.dart';
-import 'package:frontend/screens/manage_organization_screen.dart'; // new screen
+import 'package:frontend/screens/manage_organization_screen.dart';
+import 'package:frontend/utils/ui_helpers.dart';
+
 
 class AdminDrawerWidget extends StatefulWidget {
   final VoidCallback? onOrgCreated; // callback to refresh dashboard
@@ -44,9 +46,8 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
                     widget.onOrgCreated!(); // refresh dashboard users
                   }
                   Navigator.pop(context); // close drawer
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Organization created!")),
-                  );
+                  if (!mounted) return;
+                  UIHelpers.showSuccess(context, "Organization created!");
                 },
               ),
             ),
@@ -104,14 +105,10 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
                   if (!context.mounted) return;
 
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("You left the organization")),
-                  );
+                  if (!mounted) return;
+                  UIHelpers.showSuccess(context, "You left the organization");
                 } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error leaving org: $e")),
-                  );
+                  UIHelpers.showError(context, "Error leaving org: $e");
                 }
               },
             ),

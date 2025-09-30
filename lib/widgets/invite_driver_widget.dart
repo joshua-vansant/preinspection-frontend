@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../providers/auth_provider.dart';
@@ -16,14 +17,11 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
   bool _loading = false;
   bool _copied = false;
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> _fetchInviteCode() async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      _showSnackBar('Not authenticated');
+      if (!mounted) return;
+      UIHelpers.showError(context, "Not authenticated");
       return;
     }
 
@@ -40,7 +38,8 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
 
       if (mounted) setState(() => _inviteCode = code);
     } catch (e) {
-      _showSnackBar("Error fetching code: $e");
+      if (!mounted) return;
+      UIHelpers.showError(context, "Error fetching code: $e");
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -53,7 +52,7 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
 
     if (!mounted) return;
     setState(() => _copied = true);
-    _showSnackBar("Invite code copied!");
+    UIHelpers.showSuccess(context, "Invite code copied!");
 
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) setState(() => _copied = false);

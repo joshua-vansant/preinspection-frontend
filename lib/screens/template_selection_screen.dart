@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import '../services/template_service.dart';
 import '../providers/auth_provider.dart';
@@ -51,10 +52,8 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        error = 'Failed to load templates: $e';
-        isLoading = false;
-      });
+          UIHelpers.showError(context, "Failed to load templates: $e");
+          setState(() => isLoading = false);
     }
   }
 

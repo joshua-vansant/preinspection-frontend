@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
@@ -66,16 +67,12 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
         context.read<AuthProvider>().setOrg(updatedOrg);
 
         if (!context.mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Organization updated!")));
+        UIHelpers.showSuccess(context, "Organization updated!");
         Navigator.pop(context);
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating organization: $e")),
-      );
+        UIHelpers.showError(context, "Error updating organization: $e");
     } finally {
       setState(() => _isLoading = false);
     }

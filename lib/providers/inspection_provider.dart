@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/inspection_service.dart';
+import '../utils/ui_helpers.dart';
 
 class InspectionProvider extends ChangeNotifier {
   Map<String, dynamic> _currentInspection = {};
@@ -57,7 +58,8 @@ class InspectionProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isSubmitting = false;
-      _error = 'Failed to submit inspection: $e';
+      final parsed = UIHelpers.parseError(e.toString());
+      _error = parsed.isNotEmpty ? 'Failed to submit inspection: $parsed' : 'Failed to submit inspection';
       notifyListeners();
       return false;
     }
@@ -76,7 +78,8 @@ class InspectionProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isSubmitting = false;
-      _error = 'Failed to update inspection: $e';
+      final parsed = UIHelpers.parseError(e.toString());
+      _error = parsed.isNotEmpty ? 'Failed to submit inspection: $parsed' : 'Failed to submit inspection';
       notifyListeners();
       return false;
     }

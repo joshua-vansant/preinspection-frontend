@@ -31,7 +31,6 @@ class _AppLifeCycleHandlerState extends State<AppLifeCycleHandler>
     final authProvider = context.read<AuthProvider>();
 
     if (state == AppLifecycleState.resumed) {
-      // App resumed: refresh token if needed
       debugPrint("App resumed, checking token...");
       await authProvider.refreshTokenIfNeeded();
     }

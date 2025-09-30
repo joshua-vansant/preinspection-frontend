@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/admin_templates_screen.dart';
 import 'package:frontend/screens/vehicle_selection_screen.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -135,11 +136,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _error = "Failed to load inspections: $e";
-        _isLoading = false;
-      });
-    }
+        if (!mounted) return;
+        UIHelpers.showError(context, e.toString());
+        setState(() => _isLoading = false);
+      }
   }
 
   void _subscribeToSocket() {
@@ -335,8 +335,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     try {
       final users = await OrganizationService.getAllUsers(token);
       setState(() => _users = users);
-    } catch (e) {
-      setState(() => _error = "Error loading users: $e");
+    }catch (e) {
+      if (!mounted) return;
+      UIHelpers.showError(context, e.toString());
     } finally {
       setState(() => _loading = false);
     }
@@ -567,13 +568,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 content: Text("${user['first_name']} removed"),
                               ),
                             );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Error removing driver: $e"),
-                              ),
-                            );
+                          }catch (e) {
+                            if (!mounted) return;
+                            UIHelpers.showError(context, e.toString());
                           }
+
                         },
                         child: Card(
                           elevation: 2,

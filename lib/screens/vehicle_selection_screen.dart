@@ -6,6 +6,7 @@ import '../services/vehicle_service.dart';
 import 'template_selection_screen.dart';
 import '../services/inspection_service.dart';
 import 'add_vehicle_screen.dart';
+import 'package:frontend/utils/ui_helpers.dart';
 
 class VehicleSelectionScreen extends StatefulWidget {
   const VehicleSelectionScreen({super.key});
@@ -34,19 +35,16 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 
       setState(() => isLoading = false);
     } catch (e) {
-      setState(() {
-        error = 'Failed to load vehicles: $e';
-        isLoading = false;
-      });
+      if (!mounted) return;
+      UIHelpers.showError(context, "Failed to load vehicles: $e");
+      setState(() => isLoading = false);
     }
   }
 
   Future<void> selectVehicle(Map<String, dynamic> vehicle) async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Not authenticated')));
+      UIHelpers.showError(context, "Not authenticated");
       return;
     }
 
@@ -63,7 +61,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
         vehicle['id'],
       );
     } catch (e) {
-      debugPrint('Failed to fetch last inspection: $e');
+      UIHelpers.showError(context, 'Failed to fetch last inspection: $e');
     } finally {
       Navigator.of(context).pop();
     }
@@ -152,6 +150,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                 token,
                 licensePlate: newVehicle["license_plate"],
               );
+              UIHelpers.showSuccess(context, "Vehicle added successfully!");
             }
           }
         },

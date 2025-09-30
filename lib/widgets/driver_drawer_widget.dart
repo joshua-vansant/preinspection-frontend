@@ -3,15 +3,11 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 import 'join_organization_widget.dart';
+import 'package:frontend/utils/ui_helpers.dart';
+
 
 class DriverDrawerWidget extends StatelessWidget {
   const DriverDrawerWidget({super.key});
-
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +36,7 @@ class DriverDrawerWidget extends StatelessWidget {
               onTap: () async {
                 final token = authProvider.token;
                 if (token == null) {
-                  _showSnackBar(context, "Not authenticated");
+                  UIHelpers.showError(context, "Not authenticated");
                   return;
                 }
 
@@ -48,12 +44,11 @@ class DriverDrawerWidget extends StatelessWidget {
                   await OrganizationService.leaveOrg(token);
                   authProvider.clearOrg();
                   if (!context.mounted) return;
-
                   Navigator.pop(context);
-                  _showSnackBar(context, "You left the organization");
+                  UIHelpers.showError(context, "You left the organization");
                 } catch (e) {
                   if (!context.mounted) return;
-                  _showSnackBar(context, "Error leaving org: $e");
+                  UIHelpers.showError(context, "Error leaving org: $e");
                 }
               },
             ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
+import 'package:frontend/utils/ui_helpers.dart';
+
 
 class JoinOrganizationWidget extends StatefulWidget {
   const JoinOrganizationWidget({super.key});
@@ -20,24 +22,18 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
     super.dispose();
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> _joinOrganization() async {
     final authProvider = context.read<AuthProvider>();
     final token = authProvider.token;
     final code = inviteController.text.trim();
 
     if (token == null) {
-      _showSnackBar('Not authenticated');
+      UIHelpers.showError(context, "Not authenticated");
       return;
     }
 
     if (code.isEmpty) {
-      _showSnackBar('Please enter an invite code');
+      UIHelpers.showError(context, "Please enter an invite code");
       return;
     }
 
@@ -50,10 +46,10 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
         authProvider.setOrg(result['organization']);
       }
 
-      _showSnackBar(result['message'] ?? 'Joined organization successfully');
+      UIHelpers.showSuccess(context, result['message'] ?? "Joined organization successfully");
       inviteController.clear();
     } catch (e) {
-      _showSnackBar('Error joining organization: $e');
+      UIHelpers.showError(context, "Error joining organization: $e");
     } finally {
       if (mounted) setState(() => isJoining = false);
     }

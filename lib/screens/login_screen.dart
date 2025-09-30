@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
+import '../providers/auth_provider.dart';
+import '../utils/ui_helpers.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,15 +19,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final lastNameController = TextEditingController();
   final phoneController = TextEditingController();
 
-  String error = "";
   bool loading = false;
-  bool isRegistering = false; // <-- toggle flag
+  bool isRegistering = false;
 
   Future<void> handleLogin() async {
-    setState(() {
-      loading = true;
-      error = "";
-    });
+    setState(() => loading = true);
 
     try {
       final result = await AuthService.login(
@@ -37,26 +34,17 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = result['access_token'];
       final userData = result['user'];
       final expiresIn = result['expires_in'];
-      final role = userData['role'] as String;
+      final role = userData['role'] as String?;
 
       if (token != null && role != null) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        authProvider.setToken(
-          token,
-          role,
-          userData: userData,
-          expiresIn: expiresIn,
-        );
+        authProvider.setToken(token, role, userData: userData, expiresIn: expiresIn);
       }
 
-      // Fetch org data if available
       if (token != null) {
         final orgData = await OrganizationService.getMyOrg(token);
         if (orgData != null) {
-          final authProvider = Provider.of<AuthProvider>(
-            context,
-            listen: false,
-          );
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
           authProvider.setOrg(orgData);
         }
       }
@@ -65,17 +53,14 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       if (!mounted) return;
-      setState(() => error = e.toString());
+      UIHelpers.showError(context, e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
   Future<void> handleRegister() async {
-    setState(() {
-      loading = true;
-      error = "";
-    });
+    setState(() => loading = true);
 
     try {
       final result = await AuthService.register(
@@ -90,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final token = result['access_token'];
       final userData = result['user'];
-      final role = userData['role'] as String;
+      final role = userData['role'] as String?;
 
       if (token != null && role != null) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -101,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       if (!mounted) return;
-      setState(() => error = e.toString());
+      UIHelpers.showError(context, e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -132,15 +117,9 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             if (isRegistering) ...[
-              buildTextField(
-                controller: firstNameController,
-                label: "First Name",
-              ),
+              buildTextField(controller: firstNameController, label: "First Name"),
               const SizedBox(height: 8),
-              buildTextField(
-                controller: lastNameController,
-                label: "Last Name",
-              ),
+              buildTextField(controller: lastNameController, label: "Last Name"),
               const SizedBox(height: 8),
               buildTextField(
                 controller: phoneController,
@@ -149,21 +128,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
             ],
-            buildTextField(
-              controller: emailController,
-              label: "Email",
-              type: TextInputType.emailAddress,
-            ),
+            buildTextField(controller: emailController, label: "Email", type: TextInputType.emailAddress),
             const SizedBox(height: 8),
-            buildTextField(
-              controller: passwordController,
-              label: "Password",
-              obscure: true,
-              action: TextInputAction.done,
-            ),
-            const SizedBox(height: 12),
-            if (error.isNotEmpty)
-              Text(error, style: const TextStyle(color: Colors.red)),
+            buildTextField(controller: passwordController, label: "Password", obscure: true, action: TextInputAction.done),
             const SizedBox(height: 12),
             loading
                 ? const CircularProgressIndicator()
@@ -177,7 +144,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           setState(() {
                             isRegistering = !isRegistering;
-                            error = "";
                           });
                         },
                         child: Text(
