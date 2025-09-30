@@ -19,7 +19,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _vinController = TextEditingController();
   final TextEditingController _mileageController = TextEditingController();
-  final TextEditingController _statusController = TextEditingController(text: 'active');
 
   @override
   void initState() {
@@ -33,7 +32,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       _yearController.text = vehicle['year']?.toString() ?? '';
       _vinController.text = vehicle['vin'] ?? '';
       _mileageController.text = vehicle['mileage']?.toString() ?? '';
-      _statusController.text = vehicle['status'] ?? 'active';
     }
   }
 
@@ -46,7 +44,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     _yearController.dispose();
     _vinController.dispose();
     _mileageController.dispose();
-    _statusController.dispose();
     super.dispose();
   }
 
@@ -61,7 +58,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       'year': _yearController.text.isNotEmpty ? int.tryParse(_yearController.text) : null,
       'vin': _vinController.text.isNotEmpty ? _vinController.text : null,
       'mileage': _mileageController.text.isNotEmpty ? int.tryParse(_mileageController.text) : null,
-      'status': _statusController.text.isNotEmpty ? _statusController.text : 'active',
+      'status': 'active',
     };
 
     Navigator.pop(context, vehicleData);
@@ -73,7 +70,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? "Edit Vehicle" : "Add Vehicle")),
-      body: Container(
+      body: SafeArea(
+        child: Container(
         color: Colors.grey[100],
         padding: const EdgeInsets.all(16),
         child: Center(
@@ -161,14 +159,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         ),
                         keyboardType: TextInputType.number,
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _statusController,
-                        decoration: const InputDecoration(
-                          labelText: 'Status',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
+                    
                       const SizedBox(height: 24),
                       SizedBox(
                         height: 48,
@@ -191,6 +182,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
