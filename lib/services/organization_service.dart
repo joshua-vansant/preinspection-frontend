@@ -7,7 +7,7 @@ class OrganizationService {
     String token,
     String inviteCode,
   ) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}organizations/join');
+    final url = Uri.parse('${ApiConfig.baseUrl}/organizations/join');
 
     final response = await http.post(
       url,
@@ -84,7 +84,7 @@ class OrganizationService {
   }
 
   static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}organizations/users');
+    final url = Uri.parse('${ApiConfig.baseUrl}/organizations/users');
     final response = await http.get(
       url,
       headers: ApiConfig.headers(token: token),
@@ -103,7 +103,7 @@ class OrganizationService {
   }
 
   static Future<void> removeDriver(String token, int driverId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}organizations/remove_driver');
+    final url = Uri.parse('${ApiConfig.baseUrl}/organizations/remove_driver');
     final response = await http.post(
       url,
       headers: ApiConfig.headers(token: token),
@@ -119,7 +119,7 @@ class OrganizationService {
     String token,
     String name,
   ) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}organizations/create');
+    final url = Uri.parse('${ApiConfig.baseUrl}/organizations/create');
 
     final response = await http.post(
       url,

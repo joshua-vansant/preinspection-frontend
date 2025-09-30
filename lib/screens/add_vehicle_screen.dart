@@ -73,61 +73,126 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? "Edit Vehicle" : "Add Vehicle")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _licensePlateController,
-                decoration: const InputDecoration(labelText: 'License Plate *'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'License Plate is required';
-                  }
-                  return null;
-                },
+      body: Container(
+        color: Colors.grey[100],
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        "Vehicle Details",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _licensePlateController,
+                        decoration: const InputDecoration(
+                          labelText: 'License Plate *',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'License Plate is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Optional Info",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _numberController,
+                        decoration: const InputDecoration(
+                          labelText: 'Vehicle Number',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _makeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Make',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _modelController,
+                        decoration: const InputDecoration(
+                          labelText: 'Model',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _yearController,
+                        decoration: const InputDecoration(
+                          labelText: 'Year',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _vinController,
+                        decoration: const InputDecoration(
+                          labelText: 'VIN',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _mileageController,
+                        decoration: const InputDecoration(
+                          labelText: 'Mileage',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _statusController,
+                        decoration: const InputDecoration(
+                          labelText: 'Status',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            backgroundColor: Colors.blue.shade600,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          child: Text(isEditing ? 'Update Vehicle' : 'Save Vehicle'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              TextFormField(
-                controller: _numberController,
-                decoration: const InputDecoration(labelText: 'Vehicle Number'),
-              ),
-              TextFormField(
-                controller: _makeController,
-                decoration: const InputDecoration(labelText: 'Make'),
-              ),
-              TextFormField(
-                controller: _modelController,
-                decoration: const InputDecoration(labelText: 'Model'),
-              ),
-              TextFormField(
-                controller: _yearController,
-                decoration: const InputDecoration(labelText: 'Year'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _vinController,
-                decoration: const InputDecoration(labelText: 'VIN'),
-              ),
-              TextFormField(
-                controller: _mileageController,
-                decoration: const InputDecoration(labelText: 'Mileage'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _statusController,
-                decoration: const InputDecoration(labelText: 'Status'),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _submit,
-                child: Text(isEditing ? 'Update Vehicle' : 'Save Vehicle'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+

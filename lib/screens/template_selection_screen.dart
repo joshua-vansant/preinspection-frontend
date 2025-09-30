@@ -90,40 +90,62 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
       appBar: AppBar(title: const Text("Select Template")),
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
+          // Vehicle header card
+          Card(
             color: Colors.blue.shade50,
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Vehicle: ${widget.vehicle['name'] ?? widget.vehicle['id']}',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Text('Inspection type: ${widget.inspectionType.toUpperCase()}'),
-                if (widget.lastInspection != null) ...[
-                  const SizedBox(height: 6),
+            margin: const EdgeInsets.all(12),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'Last inspection id: ${widget.lastInspection!['id']}',
-                    style: const TextStyle(fontSize: 12),
+                    'Vehicle: ${widget.vehicle['name'] ?? widget.vehicle['id']}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Inspection type: ${widget.inspectionType.toUpperCase()}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  if (widget.lastInspection != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Last inspection ID: ${widget.lastInspection!['id']}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
+
+          // Template list
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               itemCount: templates.length,
               itemBuilder: (_, index) {
                 final template = templates[index];
-                return ListTile(
-                  title: Text(template['name']),
-                  subtitle: Text(
-                    'Created by: ${template['created_by'] ?? 'unknown'}',
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    leading: const Icon(Icons.description, color: Colors.blue),
+                    title: Text(
+                      template['name'] ?? 'Unnamed Template',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'Created by: ${template['created_by'] ?? 'unknown'}',
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => selectTemplate(template),
                   ),
-                  onTap: () => selectTemplate(template),
                 );
               },
             ),

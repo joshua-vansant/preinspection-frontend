@@ -7,7 +7,8 @@ class ManageOrganizationScreen extends StatefulWidget {
   const ManageOrganizationScreen({super.key});
 
   @override
-  State<ManageOrganizationScreen> createState() => _ManageOrganizationScreenState();
+  State<ManageOrganizationScreen> createState() =>
+      _ManageOrganizationScreenState();
 }
 
 class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
@@ -25,7 +26,8 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
     _nameController = TextEditingController(text: org?['name'] ?? '');
     _addressController = TextEditingController(text: org?['address'] ?? '');
     _phoneController = TextEditingController(text: org?['phone_number'] ?? '');
-    _contactNameController = TextEditingController(text: org?['contact_name'] ?? '');
+    _contactNameController =
+        TextEditingController(text: org?['contact_name'] ?? '');
   }
 
   @override
@@ -51,9 +53,15 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
           orgId,
           {
             'name': _nameController.text.trim(),
-            'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-            'phone_number': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-            'contact_name': _contactNameController.text.trim().isEmpty ? null : _contactNameController.text.trim(),
+            'address': _addressController.text.trim().isEmpty
+                ? null
+                : _addressController.text.trim(),
+            'phone_number': _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
+            'contact_name': _contactNameController.text.trim().isEmpty
+                ? null
+                : _contactNameController.text.trim(),
           },
         );
 
@@ -79,48 +87,97 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Manage Organization")),
-      body: Padding(
+      body: Container(
+        color: Colors.grey[100],
         padding: const EdgeInsets.all(16.0),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(labelText: "Organization Name"),
-                        validator: (value) =>
-                            value == null || value.isEmpty ? "Name cannot be empty" : null,
+        child: Center(
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Form(
+                      key: _formKey,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              "Organization Details",
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: "Organization Name *",
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) => value == null ||
+                                      value.isEmpty
+                                  ? "Name cannot be empty"
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "Optional Info",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _addressController,
+                              decoration: const InputDecoration(
+                                labelText: "Address",
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _phoneController,
+                              decoration: const InputDecoration(
+                                labelText: "Phone Number",
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.phone,
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _contactNameController,
+                              decoration: const InputDecoration(
+                                labelText: "Contact Name",
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _saveOrganization,
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  backgroundColor:
+                                      Colors.blue.shade600, // gradient alternative
+                                  textStyle: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                child: const Text("Save"),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: const InputDecoration(labelText: "Address (optional)"),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration: const InputDecoration(labelText: "Phone Number (optional)"),
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _contactNameController,
-                        decoration: const InputDecoration(labelText: "Contact Name (optional)"),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _saveOrganization,
-                        child: const Text("Save"),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+        ),
       ),
     );
   }
 }
+

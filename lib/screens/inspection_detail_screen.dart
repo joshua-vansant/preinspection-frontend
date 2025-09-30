@@ -4,7 +4,7 @@ import '../providers/auth_provider.dart';
 import 'inspection_form_screen.dart';
 import 'package:intl/intl.dart';
 import '../services/inspection_service.dart';
-import 'package:frontend/utils/date_time_utils.dart';
+import '../utils/date_time_utils.dart';
 
 class InspectionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> inspection;
@@ -51,7 +51,7 @@ class InspectionDetailScreen extends StatelessWidget {
                     inspection['id'],
                     token,
                   );
-                  Navigator.pop(context); // remove loading dialog
+                  Navigator.pop(context);
 
                   final template =
                       fullInspection['template'] as Map<String, dynamic>?;
@@ -89,46 +89,85 @@ class InspectionDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Vehicle ID: ${inspection['vehicle_id'] ?? "N/A"}'),
-            Text('Template ID: ${inspection['template_id'] ?? "N/A"}'),
-            Text('Date: $formattedDate'),
+            _infoRow('Vehicle ID', inspection['vehicle_id']?.toString() ?? "N/A"),
+            _infoRow('Template ID', inspection['template_id']?.toString() ?? "N/A"),
+            _infoRow('Date', formattedDate),
             const SizedBox(height: 16),
-            // NEW: Additional fields
-            Text('Start Mileage: ${inspection['start_mileage'] ?? "N/A"}'),
-            Text('End Mileage: ${inspection['end_mileage'] ?? "N/A"}'),
-            Text('Fuel Level: ${(inspection['fuel_level'] ?? 0).round()}%'),
-            if (inspection['fuel_notes'] != null &&
-                (inspection['fuel_notes'] as String).isNotEmpty)
-              Text('Fuel Notes: ${inspection['fuel_notes']}'),
-            Text('Odometer Verified: ${inspection['odometer_verified'] ?? false}'),
-            const SizedBox(height: 16),
-            const Text(
-              'Results:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+
+            // Start Mileage card with icon
+            Card(
+              color: Colors.blue.shade50,
+              elevation: 2,
+              child: ListTile(
+                leading: const Icon(Icons.speed, color: Colors.blue),
+                title: const Text('Start Mileage', style: TextStyle(fontWeight: FontWeight.bold)),
+                trailing: Text(
+                  inspection['start_mileage']?.toString() ?? "N/A",
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
             ),
+            const SizedBox(height: 8),
+
+            // Fuel info
+            Card(
+              color: Colors.green.shade50,
+              elevation: 2,
+              child: ListTile(
+                leading: const Icon(Icons.local_gas_station, color: Colors.green),
+                title: const Text('Fuel Level', style: TextStyle(fontWeight: FontWeight.bold)),
+                trailing: Text('${(inspection['fuel_level'] ?? 0).round()}%'),
+              ),
+            ),
+            if (inspection['fuel_notes'] != null &&
+                (inspection['fuel_notes'] as String).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Fuel Notes: ${inspection['fuel_notes']}'),
+            ],
+
+            const SizedBox(height: 8),
+            _infoRow('Odometer Verified', inspection['odometer_verified']?.toString() ?? "false"),
+
+            const SizedBox(height: 16),
+            const Text('Results:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 4),
             Expanded(
               child: ListView(
                 children: results.entries.map((e) {
                   final displayKey = e.key.toString();
                   final displayValue = e.value?.toString() ?? "N/A";
-                  return ListTile(
-                    title: Text('Item $displayKey'),
-                    trailing: Text(displayValue),
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text(displayKey),
+                      trailing: Text(displayValue),
+                    ),
                   );
                 }).toList(),
               ),
             ),
+
             if (inspection['notes'] != null &&
                 (inspection['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text(
-                'Notes:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text(inspection['notes']),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  // Helper for consistent rows
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(value),
+        ],
       ),
     );
   }

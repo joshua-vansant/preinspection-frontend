@@ -200,43 +200,84 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ),
         const SizedBox(height: 16),
         Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-                  ? Center(child: Text('Error: $_error'))
-                  : _history.isEmpty
-                      ? const Center(child: Text('No inspections yet.'))
-                      : RefreshIndicator(
-                          onRefresh: _fetchHistory,
-                          child: ListView.builder(
-                            itemCount: _history.length,
-                            itemBuilder: (_, index) {
-                              final item = _history[index];
-                              final formattedDate = parseUtcToLocal(item['created_at']);
+  child: _isLoading
+      ? const Center(child: CircularProgressIndicator())
+      : _error != null
+          ? Center(child: Text('Error: $_error'))
+          : _history.isEmpty
+              ? const Center(child: Text('No inspections yet.'))
+              : RefreshIndicator(
+                  onRefresh: _fetchHistory,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _history.length,
+                    itemBuilder: (_, index) {
+                      final item = _history[index];
+                      final formattedDate =
+                          parseUtcToLocal(item['created_at']);
+                      final driverName = item['driver'] != null
+                          ? item['driver']['full_name']
+                          : 'N/A';
 
-                              final driverName = item['driver'] != null
-                                  ? item['driver']['full_name']
-                                  : 'N/A';
+                      final inspectionType =
+                          (item['type'] ?? 'N/A').toUpperCase();
 
-                              return ListTile(
-                                title: Text('Inspection #${item['id']}'),
-                                subtitle: Text(
-                                  'Date: $formattedDate\nDriver: $driverName',
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => InspectionDetailScreen(
-                                          inspection: item),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
+                      return Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          title: Text(
+                            'Inspection #${item['id']}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text('Driver: $driverName'),
+                              Text('Date: $formattedDate'),
+                            ],
+                          ),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: inspectionType == 'PRE'
+                                  ? Colors.green.shade100
+                                  : Colors.blue.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              inspectionType,
+                              style: TextStyle(
+                                  color: inspectionType == 'PRE'
+                                      ? Colors.green.shade800
+                                      : Colors.blue.shade800,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    InspectionDetailScreen(
+                                        inspection: item),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+),
       ],
     );
   }
@@ -419,112 +460,137 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
         // User List
         Expanded(
-          child: Container(
-            color: Colors.grey[200],
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(child: Text(_error!))
-                    : _users.isEmpty
-                        ? const Center(child: Text("No users in your org yet."))
-                        : ListView(
-                            children: [
-                              // Admin at the top
-                              if (_users.any((u) => u['role'] == 'admin'))
-                                ListTile(
-                                  leading:
-                                      const Icon(Icons.admin_panel_settings),
-                                  title: Text(
-                                    '${_users.firstWhere((u) => u['role'] == 'admin')["first_name"]} '
-                                    '${_users.firstWhere((u) => u['role'] == 'admin')["last_name"]} (Admin)',
-                                  ),
-                                  subtitle: Text(
-                                    _users.firstWhere(
-                                          (u) => u['role'] == 'admin',
-                                        )["email"] ??
-                                        "",
-                                  ),
-                                ),
+  child: _loading
+      ? const Center(child: CircularProgressIndicator())
+      : _error != null
+          ? Center(child: Text(_error!))
+          : _users.isEmpty
+              ? const Center(child: Text("No users in your org yet."))
+              : ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    // Admin Card
+                    if (_users.any((u) => u['role'] == 'admin'))
+                      Card(
+                        color: Colors.amber.shade50,
+                        elevation: 2,
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.admin_panel_settings,
+                            color: Colors.amber,
+                          ),
+                          title: Text(
+                            '${_users.firstWhere((u) => u['role'] == 'admin')["first_name"]} '
+                            '${_users.firstWhere((u) => u['role'] == 'admin')["last_name"]} (Admin)',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            _users.firstWhere((u) => u['role'] == 'admin')
+                                    ["email"] ??
+                                "",
+                          ),
+                        ),
+                      ),
 
-                              // Drivers
-                              ..._users.where((u) => u['role'] != 'admin').map(
-                                (user) {
-                                  return Dismissible(
-                                    key: ValueKey(user['id']),
-                                    direction: DismissDirection.endToStart,
-                                    background: Container(
-                                      color: Colors.red,
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
-                                      child: const Icon(
-                                        Icons.delete,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    confirmDismiss: (_) async {
-                                      final confirm =
-                                          await showDialog<bool>(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                          title: const Text(
-                                              "Remove driver?"),
-                                          content: Text(
-                                              "Are you sure you want to remove ${user['first_name']}?"),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: const Text("Cancel"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              child: const Text("Remove"),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                      return confirm ?? false;
-                                    },
-                                    onDismissed: (_) async {
-                                      try {
-                                        final token =
-                                            context.read<AuthProvider>().token!;
-                                        await OrganizationService.removeDriver(
-                                          token,
-                                          user['id'],
-                                        );
-                                        setState(() => _users.removeWhere(
-                                            (u) => u['id'] == user['id']));
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                                "${user['first_name']} removed"),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                                "Error removing driver: $e"),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: ListTile(
-                                      leading: const Icon(Icons.person),
-                                      title: Text(
-                                        '${user["first_name"]} ${user["last_name"]}',
-                                      ),
-                                      subtitle: Text(user["email"] ?? ""),
-                                      trailing: Text(user["role"] ?? ""),
-                                    ),
-                                  );
-                                },
-                              ).toList(),
+                    // Drivers Cards
+                    ..._users.where((u) => u['role'] != 'admin').map(
+                      (user) {
+                        return Dismissible(
+                          key: ValueKey(user['id']),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          confirmDismiss: (_) async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text("Remove driver?"),
+                                content: Text(
+                                    "Are you sure you want to remove ${user['first_name']}?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text("Remove"),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return confirm ?? false;
+                          },
+                          onDismissed: (_) async {
+                            try {
+                              final token =
+                                  context.read<AuthProvider>().token!;
+                              await OrganizationService.removeDriver(
+                                token,
+                                user['id'],
+                              );
+                              setState(() =>
+                                  _users.removeWhere((u) => u['id'] == user['id']));
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      "${user['first_name']} removed"),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text("Error removing driver: $e"),
+                                ),
+                              );
+                            }
+                          },
+                          child: Card(
+                            elevation: 2,
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ListTile(
+                              leading: const Icon(Icons.person),
+                              title: Text(
+                                '${user["first_name"]} ${user["last_name"]}',
+                                style:
+                                    const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(user["email"] ?? ""),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  user["role"] ?? "",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ).toList(),
 
                               // No drivers message
                               if (_users
@@ -539,7 +605,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             ],
                           ),
           ),
-        ),
       ],
     );
   }

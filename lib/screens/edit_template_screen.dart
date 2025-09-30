@@ -97,9 +97,8 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error updating template: $e")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error updating template: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -144,9 +143,8 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error deleting template: $e")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error deleting template: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -166,68 +164,97 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       ),
       body: saving
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : Container(
+              color: Colors.grey[100],
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: "Template Name",
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SwitchListTile(
-                    value: isDefault,
-                    title: const Text("Default Template"),
-                    onChanged: (val) => setState(() => isDefault = val),
-                  ),
-                  const Divider(),
-                  ...itemsControllers.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final controllers = entry.value;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                child: Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const Text(
+                          "Template Info",
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
                         TextField(
-                          controller: controllers["name"],
-                          decoration: InputDecoration(
-                            labelText: "Item ${index + 1} Name",
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: "Template Name",
+                            border: OutlineInputBorder(),
                           ),
                         ),
-                        TextField(
-                          controller: controllers["question"],
-                          decoration: InputDecoration(
-                            labelText: "Item ${index + 1} Question",
-                          ),
+                        const SizedBox(height: 12),
+                        SwitchListTile(
+                          value: isDefault,
+                          title: const Text("Default Template"),
+                          onChanged: (val) => setState(() => isDefault = val),
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _removeItem(index),
-                          ),
+                        const Divider(height: 24),
+                        const Text(
+                          "Items",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
-                        const Divider(),
+                        const SizedBox(height: 8),
+                        ...itemsControllers.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final controllers = entry.value;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextField(
+                                controller: controllers["name"],
+                                decoration: InputDecoration(
+                                  labelText: "Item ${index + 1} Name",
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: controllers["question"],
+                                decoration: InputDecoration(
+                                  labelText: "Item ${index + 1} Question",
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  onPressed: () => _removeItem(index),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          );
+                        }),
+                        TextButton.icon(
+                          onPressed: _addItem,
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add Item"),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: saving ? null : _deleteTemplate,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: const Icon(Icons.delete),
+                          label: const Text("Delete Template"),
+                        ),
                       ],
-                    );
-                  }),
-                  TextButton.icon(
-                    onPressed: _addItem,
-                    icon: const Icon(Icons.add),
-                    label: const Text("Add Item"),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: saving ? null : _deleteTemplate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
                     ),
-                    icon: const Icon(Icons.delete),
-                    label: const Text("Delete Template"),
                   ),
-                ],
+                ),
               ),
             ),
     );

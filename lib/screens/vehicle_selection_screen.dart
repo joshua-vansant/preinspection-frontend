@@ -95,8 +95,14 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Select Vehicle")),
       body: vehicles.isEmpty
-          ? const Center(child: Text("No vehicles yet. Add one to continue."))
+          ? const Center(
+              child: Text(
+                "No vehicles yet. Add one to continue.",
+                style: TextStyle(fontSize: 16),
+              ),
+            )
           : ListView.builder(
+              padding: const EdgeInsets.all(12),
               itemCount: vehicles.length,
               itemBuilder: (_, index) {
                 final vehicle = vehicles[index];
@@ -105,8 +111,24 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                     "${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''}".trim();
 
                 return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
-                    title: Text("$licensePlate ${makeModel.isNotEmpty ? '($makeModel)' : ''}"),
+                    leading: const Icon(
+                      Icons.directions_car,
+                      color: Colors.blue,
+                      size: 36,
+                    ),
+                    title: Text(
+                      licensePlate,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    subtitle: Text(
+                      makeModel,
+                      style: const TextStyle(color: Colors.black87),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () => selectVehicle(vehicle),
                   ),
                 );
@@ -123,7 +145,9 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
           if (newVehicle != null) {
             final token = context.read<AuthProvider>().token;
             if (token != null) {
-              await context.read<VehicleProvider>().addVehicle(token, licensePlate: newVehicle["license_plate"]);
+              await context
+                  .read<VehicleProvider>()
+                  .addVehicle(token, licensePlate: newVehicle["license_plate"]);
             }
           }
         },

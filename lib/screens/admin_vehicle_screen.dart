@@ -40,7 +40,6 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
   }
 
   Future<void> editVehicle(Map<String, dynamic> vehicle) async {
-    // Navigate to the same AddVehicleScreen but pre-fill with vehicle data
     final updatedVehicle = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -50,8 +49,23 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
 
     if (updatedVehicle != null) {
       final token = context.read<AuthProvider>().token!;
-      await context.read<VehicleProvider>().updateVehicle(token, vehicle['id'], updatedVehicle);
-      fetchVehicles(); // Refresh list
+      await context
+          .read<VehicleProvider>()
+          .updateVehicle(token, vehicle['id'], updatedVehicle);
+      fetchVehicles();
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'inactive':
+        return Colors.grey;
+      case 'maintenance':
+        return Colors.orange;
+      default:
+        return Colors.blueGrey;
     }
   }
 
@@ -59,85 +73,141 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
   Widget build(BuildContext context) {
     final vehicles = context.watch<VehicleProvider>().vehicles;
 
-    if (isLoading) return const Center(child: CircularProgressIndicator());
-    if (error.isNotEmpty) return Center(child: Text(error));
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Vehicles")),
-      body: vehicles.isEmpty
-          ? const Center(child: Text("No vehicles yet. Add one to continue."))
-          : ListView.builder(
-              itemCount: vehicles.length,
-              itemBuilder: (_, index) {
-                final vehicle = vehicles[index];
-                final licensePlate = vehicle['license_plate'] ?? '';
-                final makeModel =
-                    "${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''}".trim();
+      appBar: AppBar(
+        title: const Text("Manage Vehicles"),
+        backgroundColor: Colors.blue.shade600,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : error.isNotEmpty
+              ? Center(child: Text(error))
+              : vehicles.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No vehicles yet. Add one to continue.",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: ListView.builder(
+                        itemCount: vehicles.length,
+                        itemBuilder: (_, index) {
+                          final vehicle = vehicles[index];
+                          final licensePlate = vehicle['license_plate'] ?? '';
+                          final makeModel =
+                              "${vehicle['make'] ?? ''} ${vehicle['model'] ?? ''}".trim();
+                          final status = (vehicle['status'] ?? 'active').toString();
 
-                return Card(
-                  child: ListTile(
-                    title: Text("$licensePlate ${makeModel.isNotEmpty ? '($makeModel)' : ''}"),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => editVehicle(vehicle),
+                          return Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Row(
+                                children: [
+                                  // Status indicator
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(status),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Vehicle info
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "$licensePlate${makeModel.isNotEmpty ? ' ($makeModel)' : ''}",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "Status: ${status[0].toUpperCase()}${status.substring(1)}",
+                                          style: TextStyle(
+                                            color: _statusColor(status),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Edit button
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    color: Colors.blue.shade700,
+                                    onPressed: () => editVehicle(vehicle),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-  floatingActionButton: Consumer<AuthProvider>(
-  builder: (context, authProvider, _) {
-    final org = authProvider.org;
+      floatingActionButton: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          final org = authProvider.org;
 
-    // If org not loaded yet → show disabled button with spinner
-    if (org == null || org["id"] == null) {
-      return FloatingActionButton(
-        onPressed: null, // disabled
-        backgroundColor: Colors.grey,
-        child: const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        ),
-      );
-    }
-
-    // Otherwise show normal button
-    return FloatingActionButton(
-      onPressed: () async {
-        final Map<String, dynamic>? newVehicle =
-            await Navigator.push<Map<String, dynamic>>(
-          context,
-          MaterialPageRoute(builder: (_) => const AddVehicleScreen()),
-        );
-
-        if (newVehicle != null) {
-          final token = authProvider.token;
-          if (token != null) {
-            await context.read<VehicleProvider>().addVehicle(
-              token,
-              licensePlate: newVehicle["license_plate"],
-              number: newVehicle["number"],
-              make: newVehicle["make"],
-              model: newVehicle["model"],
-              year: newVehicle["year"],
-              vin: newVehicle["vin"],
-              mileage: newVehicle["mileage"],
-              status: newVehicle["status"],
-              orgId: org["id"], // pass admin’s org_id safely
+          if (org == null || org["id"] == null) {
+            return FloatingActionButton(
+              onPressed: null,
+              backgroundColor: Colors.grey,
+              child: const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
             );
           }
-        }
-      },
-      child: const Icon(Icons.add),
-    );
-  },
-),
 
+          return FloatingActionButton(
+            onPressed: () async {
+              final Map<String, dynamic>? newVehicle =
+                  await Navigator.push<Map<String, dynamic>>(
+                context,
+                MaterialPageRoute(builder: (_) => const AddVehicleScreen()),
+              );
 
+              if (newVehicle != null) {
+                final token = authProvider.token;
+                if (token != null) {
+                  await context.read<VehicleProvider>().addVehicle(
+                        token,
+                        licensePlate: newVehicle["license_plate"],
+                        number: newVehicle["number"],
+                        make: newVehicle["make"],
+                        model: newVehicle["model"],
+                        year: newVehicle["year"],
+                        vin: newVehicle["vin"],
+                        mileage: newVehicle["mileage"],
+                        status: newVehicle["status"],
+                        orgId: org["id"],
+                      );
+                  fetchVehicles();
+                }
+              }
+            },
+            backgroundColor: Colors.blue.shade600,
+            child: const Icon(Icons.add),
+          );
+        },
+      ),
     );
   }
 }

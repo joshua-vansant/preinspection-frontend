@@ -59,7 +59,7 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
         );
 
         // Prefill mileage from last inspection
-        await _prefillMileage();
+        // await _prefillMileage();
       }
 
       // Sync controllers with currentInspection
@@ -68,35 +68,35 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     });
   }
 
-Future<void> _prefillMileage() async {
-  final token = context.read<AuthProvider>().token;
-  if (token == null || widget.vehicleId == null) return;
+// Future<void> _prefillMileage() async {
+//   final token = context.read<AuthProvider>().token;
+//   if (token == null || widget.vehicleId == null) return;
 
-  try {
-    final lastInspection =
-        await InspectionService.getLastInspection(token, widget.vehicleId!);
+//   try {
+//     final lastInspection =
+//         await InspectionService.getLastInspection(token, widget.vehicleId!);
 
-    if (lastInspection == null) return;
+//     if (lastInspection == null) return;
 
-    final inspectionProvider = context.read<InspectionProvider>();
-    final type = widget.inspectionType ?? 'pre-trip';
+//     final inspectionProvider = context.read<InspectionProvider>();
+//     final type = widget.inspectionType ?? 'pre-trip';
 
-    // Prefill start mileage
-    int prefillMileage = 0;
+//     // Prefill start mileage
+//     int prefillMileage = 0;
 
-    // Use last inspection's start_mileage if available
-    if (lastInspection['start_mileage'] != null) {
-      prefillMileage = lastInspection['start_mileage'] as int;
-    }
+//     // Use last inspection's start_mileage if available
+//     if (lastInspection['start_mileage'] != null) {
+//       prefillMileage = lastInspection['start_mileage'] as int;
+//     }
 
-    print("[DEBUG] Prefilling start mileage with: $prefillMileage");
+//     print("[DEBUG] Prefilling start mileage with: $prefillMileage");
 
-    startMileageController.text = prefillMileage.toString();
-    inspectionProvider.updateField('start_mileage', prefillMileage);
-  } catch (e) {
-    debugPrint("Error fetching last inspection: $e");
-  }
-}
+//     startMileageController.text = prefillMileage.toString();
+//     inspectionProvider.updateField('start_mileage', prefillMileage);
+//   } catch (e) {
+//     debugPrint("Error fetching last inspection: $e");
+//   }
+// }
 
   /// Submit inspection with validation
   Future<void> _submitInspection() async {
@@ -151,21 +151,40 @@ Future<void> _prefillMileage() async {
               padding: const EdgeInsets.all(16.0),
               children: [
                 ...templateItems.map((item) {
-                  final idStr = item['id'].toString();
-                  final answer = answers[idStr] ?? 'no';
-                  return ListTile(
-                    title: Text(item['name'] ?? ''),
-                    subtitle: Text(item['question'] ?? ''),
-                    trailing: Switch(
-                      value: answer == "yes",
-                      onChanged: (val) {
-                        final updatedResults = <String, String>{...answers};
-                        updatedResults[idStr] = val ? "yes" : "no";
-                        inspectionProvider.updateField('results', updatedResults);
-                      },
-                    ),
-                  );
-                }),
+  final idStr = item['id'].toString();
+  final answer = answers[idStr] ?? 'no';
+  return Card(
+    elevation: 2,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    margin: const EdgeInsets.symmetric(vertical: 6),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(item['question'] ?? ''),
+              ],
+            ),
+          ),
+          Switch(
+            value: answer == "yes",
+            onChanged: (val) {
+              final updatedResults = <String, String>{...answers};
+              updatedResults[idStr] = val ? "yes" : "no";
+              inspectionProvider.updateField('results', updatedResults);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}),
+
                 const SizedBox(height: 16),
                 TextField(
                   controller: notesController,

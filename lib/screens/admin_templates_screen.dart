@@ -26,9 +26,9 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
       setState(() => templates = result);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error fetching templates: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error fetching templates: $e")),
+        );
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -44,47 +44,102 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Templates")),
+      appBar: AppBar(
+        title: const Text("Manage Templates"),
+        backgroundColor: Colors.blue.shade600,
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : templates.isEmpty
-          ? const Center(child: Text("No templates available"))
-          : ListView.builder(
-              itemCount: templates.length,
-              itemBuilder: (context, index) {
-                final template = templates[index];
-                return ListTile(
-                  title: Text(template['name'] ?? "Unnamed"),
-                  subtitle: Text(
-                    "Items: ${(template['items'] as List?)?.length ?? 0}",
+              ? const Center(
+                  child: Text(
+                    "No templates available",
+                    style: TextStyle(fontSize: 16),
                   ),
-                  trailing: template['is_default'] == true
-                      ? const Icon(Icons.star)
-                      : null,
-                  onTap: () async {
-                    final updated = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EditTemplateScreen(template: template),
-                      ),
-                    );
-                    if (updated == true) {
-                      _fetchTemplates();
-                    }
-                  },
-                );
-              },
-            ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: ListView.builder(
+                    itemCount: templates.length,
+                    itemBuilder: (context, index) {
+                      final template = templates[index];
+                      final isDefault = template['is_default'] == true;
+                      final itemCount = (template['items'] as List?)?.length ?? 0;
+
+                      return Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () async {
+                            final updated = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EditTemplateScreen(template: template),
+                              ),
+                            );
+                            if (updated == true) _fetchTemplates();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                // Default/star indicator
+                                if (isDefault)
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.shade100,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Icon(Icons.star, color: Colors.amber, size: 20),
+                                  ),
+                                if (isDefault) const SizedBox(width: 12),
+                                // Template info
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        template['name'] ?? "Unnamed Template",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Items: $itemCount",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Arrow icon
+                                const Icon(Icons.chevron_right, color: Colors.grey),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blue.shade600,
         child: const Icon(Icons.add),
         onPressed: () async {
           final created = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CreateTemplateScreen()),
           );
-          if (created == true) {
-            _fetchTemplates();
-          }
+          if (created == true) _fetchTemplates();
         },
       ),
     );

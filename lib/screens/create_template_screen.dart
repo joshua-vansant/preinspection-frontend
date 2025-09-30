@@ -19,7 +19,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   @override
   void initState() {
     super.initState();
-    _addItem(); 
+    _addItem();
   }
 
   void _addItem() {
@@ -42,15 +42,11 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
     if (token == null) return;
 
     final items = itemsControllers
-        .map(
-          (c) => {
-            "name": c["name"]!.text.trim(),
-            "question": c["question"]!.text.trim(),
-          },
-        )
-        .where(
-          (item) => item["name"]!.isNotEmpty && item["question"]!.isNotEmpty,
-        )
+        .map((c) => {
+              "name": c["name"]!.text.trim(),
+              "question": c["question"]!.text.trim(),
+            })
+        .where((item) => item["name"]!.isNotEmpty && item["question"]!.isNotEmpty)
         .toList();
 
     if (nameController.text.trim().isEmpty || items.isEmpty) {
@@ -79,9 +75,8 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error creating template: $e")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error creating template: $e")));
     } finally {
       if (mounted) setState(() => creating = false);
     }
@@ -109,6 +104,9 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                     controller: nameController,
                     decoration: const InputDecoration(
                       labelText: "Template Name",
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -121,32 +119,48 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                   ...itemsControllers.asMap().entries.map((entry) {
                     final index = entry.key;
                     final controllers = entry.value;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
-                          controller: controllers["name"],
-                          decoration: InputDecoration(
-                            labelText: "Item ${index + 1} Name",
-                          ),
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: controllers["name"],
+                              decoration: InputDecoration(
+                                labelText: "Item ${index + 1} Name",
+                                border: const OutlineInputBorder(),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: controllers["question"],
+                              decoration: InputDecoration(
+                                labelText: "Item ${index + 1} Question",
+                                border: const OutlineInputBorder(),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _removeItem(index),
+                              ),
+                            ),
+                          ],
                         ),
-                        TextField(
-                          controller: controllers["question"],
-                          decoration: InputDecoration(
-                            labelText: "Item ${index + 1} Question",
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _removeItem(index),
-                          ),
-                        ),
-                        const Divider(),
-                      ],
+                      ),
                     );
                   }),
+                  const SizedBox(height: 8),
                   TextButton.icon(
                     onPressed: _addItem,
                     icon: const Icon(Icons.add),
@@ -157,6 +171,10 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                     onPressed: creating ? null : _createTemplate,
                     icon: const Icon(Icons.save),
                     label: const Text("Create Template"),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
+                    ),
                   ),
                 ],
               ),
