@@ -26,8 +26,9 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
     _nameController = TextEditingController(text: org?['name'] ?? '');
     _addressController = TextEditingController(text: org?['address'] ?? '');
     _phoneController = TextEditingController(text: org?['phone_number'] ?? '');
-    _contactNameController =
-        TextEditingController(text: org?['contact_name'] ?? '');
+    _contactNameController = TextEditingController(
+      text: org?['contact_name'] ?? '',
+    );
   }
 
   @override
@@ -48,29 +49,26 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
 
     try {
       if (orgId != null) {
-        final updatedOrg = await OrganizationService.updateOrganization(
-          token,
-          orgId,
-          {
-            'name': _nameController.text.trim(),
-            'address': _addressController.text.trim().isEmpty
-                ? null
-                : _addressController.text.trim(),
-            'phone_number': _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
-            'contact_name': _contactNameController.text.trim().isEmpty
-                ? null
-                : _contactNameController.text.trim(),
-          },
-        );
+        final updatedOrg =
+            await OrganizationService.updateOrganization(token, orgId, {
+              'name': _nameController.text.trim(),
+              'address': _addressController.text.trim().isEmpty
+                  ? null
+                  : _addressController.text.trim(),
+              'phone_number': _phoneController.text.trim().isEmpty
+                  ? null
+                  : _phoneController.text.trim(),
+              'contact_name': _contactNameController.text.trim().isEmpty
+                  ? null
+                  : _contactNameController.text.trim(),
+            });
 
         context.read<AuthProvider>().setOrg(updatedOrg);
 
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Organization updated!")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Organization updated!")));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -96,7 +94,8 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
               : Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Form(
@@ -108,7 +107,9 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
                             const Text(
                               "Organization Details",
                               style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
@@ -117,8 +118,8 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
                                 labelText: "Organization Name *",
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (value) => value == null ||
-                                      value.isEmpty
+                              validator: (value) =>
+                                  value == null || value.isEmpty
                                   ? "Name cannot be empty"
                                   : null,
                             ),
@@ -126,7 +127,9 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
                             const Text(
                               "Optional Info",
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             TextFormField(
@@ -160,11 +163,15 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
                                 onPressed: _saveOrganization,
                                 style: ElevatedButton.styleFrom(
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                  backgroundColor:
-                                      Colors.blue.shade600, // gradient alternative
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  backgroundColor: Colors
+                                      .blue
+                                      .shade600, // gradient alternative
                                   textStyle: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.bold),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 child: const Text("Save"),
                               ),
@@ -180,4 +187,3 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
     );
   }
 }
-

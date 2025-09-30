@@ -36,7 +36,8 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     notesController.text = widget.inspection['notes'] ?? '';
     fuelNotesController.text = widget.inspection['fuel_notes'] ?? '';
     startMileageController = TextEditingController(
-        text: widget.inspection['start_mileage']?.toString() ?? '');
+      text: widget.inspection['start_mileage']?.toString() ?? '',
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final inspectionProvider = context.read<InspectionProvider>();
@@ -68,35 +69,35 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     });
   }
 
-// Future<void> _prefillMileage() async {
-//   final token = context.read<AuthProvider>().token;
-//   if (token == null || widget.vehicleId == null) return;
+  // Future<void> _prefillMileage() async {
+  //   final token = context.read<AuthProvider>().token;
+  //   if (token == null || widget.vehicleId == null) return;
 
-//   try {
-//     final lastInspection =
-//         await InspectionService.getLastInspection(token, widget.vehicleId!);
+  //   try {
+  //     final lastInspection =
+  //         await InspectionService.getLastInspection(token, widget.vehicleId!);
 
-//     if (lastInspection == null) return;
+  //     if (lastInspection == null) return;
 
-//     final inspectionProvider = context.read<InspectionProvider>();
-//     final type = widget.inspectionType ?? 'pre-trip';
+  //     final inspectionProvider = context.read<InspectionProvider>();
+  //     final type = widget.inspectionType ?? 'pre-trip';
 
-//     // Prefill start mileage
-//     int prefillMileage = 0;
+  //     // Prefill start mileage
+  //     int prefillMileage = 0;
 
-//     // Use last inspection's start_mileage if available
-//     if (lastInspection['start_mileage'] != null) {
-//       prefillMileage = lastInspection['start_mileage'] as int;
-//     }
+  //     // Use last inspection's start_mileage if available
+  //     if (lastInspection['start_mileage'] != null) {
+  //       prefillMileage = lastInspection['start_mileage'] as int;
+  //     }
 
-//     print("[DEBUG] Prefilling start mileage with: $prefillMileage");
+  //     print("[DEBUG] Prefilling start mileage with: $prefillMileage");
 
-//     startMileageController.text = prefillMileage.toString();
-//     inspectionProvider.updateField('start_mileage', prefillMileage);
-//   } catch (e) {
-//     debugPrint("Error fetching last inspection: $e");
-//   }
-// }
+  //     startMileageController.text = prefillMileage.toString();
+  //     inspectionProvider.updateField('start_mileage', prefillMileage);
+  //   } catch (e) {
+  //     debugPrint("Error fetching last inspection: $e");
+  //   }
+  // }
 
   /// Submit inspection with validation
   Future<void> _submitInspection() async {
@@ -107,20 +108,30 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
 
     // Validate required mileage
     final startMileage = int.tryParse(startMileageController.text);
-    
+
     inspectionProvider.updateField('start_mileage', startMileage);
     inspectionProvider.updateField('notes', notesController.text.trim());
-    inspectionProvider.updateField('fuel_notes', fuelNotesController.text.trim());
+    inspectionProvider.updateField(
+      'fuel_notes',
+      fuelNotesController.text.trim(),
+    );
 
     final success = widget.editMode && widget.inspection.containsKey('id')
-        ? await inspectionProvider.updateInspection(token, widget.inspection['id'])
+        ? await inspectionProvider.updateInspection(
+            token,
+            widget.inspection['id'],
+          )
         : await inspectionProvider.submitInspection(token);
 
     if (!mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.editMode ? "Inspection updated" : "Inspection submitted")),
+        SnackBar(
+          content: Text(
+            widget.editMode ? "Inspection updated" : "Inspection submitted",
+          ),
+        ),
       );
       Navigator.pushAndRemoveUntil(
         context,
@@ -129,7 +140,11 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error submitting inspection: ${inspectionProvider.error}")),
+        SnackBar(
+          content: Text(
+            "Error submitting inspection: ${inspectionProvider.error}",
+          ),
+        ),
       );
     }
   }
@@ -151,39 +166,54 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
               padding: const EdgeInsets.all(16.0),
               children: [
                 ...templateItems.map((item) {
-  final idStr = item['id'].toString();
-  final answer = answers[idStr] ?? 'no';
-  return Card(
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    margin: const EdgeInsets.symmetric(vertical: 6),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(item['question'] ?? ''),
-              ],
-            ),
-          ),
-          Switch(
-            value: answer == "yes",
-            onChanged: (val) {
-              final updatedResults = <String, String>{...answers};
-              updatedResults[idStr] = val ? "yes" : "no";
-              inspectionProvider.updateField('results', updatedResults);
-            },
-          ),
-        ],
-      ),
-    ),
-  );
-}),
+                  final idStr = item['id'].toString();
+                  final answer = answers[idStr] ?? 'no';
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['name'] ?? '',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(item['question'] ?? ''),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: answer == "yes",
+                            onChanged: (val) {
+                              final updatedResults = <String, String>{
+                                ...answers,
+                              };
+                              updatedResults[idStr] = val ? "yes" : "no";
+                              inspectionProvider.updateField(
+                                'results',
+                                updatedResults,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
 
                 const SizedBox(height: 16),
                 TextField(
@@ -200,7 +230,9 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                   decoration: const InputDecoration(labelText: "Start Mileage"),
                   controller: startMileageController,
                   onChanged: (val) => inspectionProvider.updateField(
-                      'start_mileage', int.tryParse(val)),
+                    'start_mileage',
+                    int.tryParse(val),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -208,8 +240,10 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                     const Text("Odometer Verified"),
                     Checkbox(
                       value: current['odometer_verified'] ?? false,
-                      onChanged: (val) =>
-                          inspectionProvider.updateField('odometer_verified', val),
+                      onChanged: (val) => inspectionProvider.updateField(
+                        'odometer_verified',
+                        val,
+                      ),
                     ),
                   ],
                 ),
@@ -221,7 +255,8 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                   max: 100,
                   divisions: 20,
                   label: "${(current['fuel_level'] ?? 0).round()}%",
-                  onChanged: (val) => inspectionProvider.updateField('fuel_level', val),
+                  onChanged: (val) =>
+                      inspectionProvider.updateField('fuel_level', val),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -236,7 +271,9 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
             ),
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: inspectionProvider.isSubmitting ? null : _submitInspection,
+            onPressed: inspectionProvider.isSubmitting
+                ? null
+                : _submitInspection,
             tooltip: "Submit Inspection",
             child: inspectionProvider.isSubmitting
                 ? const SizedBox(
@@ -254,4 +291,3 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     );
   }
 }
-

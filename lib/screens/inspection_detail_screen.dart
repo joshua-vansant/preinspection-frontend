@@ -48,9 +48,9 @@ class InspectionDetailScreen extends StatelessWidget {
                 try {
                   final fullInspection =
                       await InspectionService.getInspectionById(
-                    inspection['id'],
-                    token,
-                  );
+                        inspection['id'],
+                        token,
+                      );
                   Navigator.pop(context);
 
                   final template =
@@ -89,8 +89,14 @@ class InspectionDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _infoRow('Vehicle ID', inspection['vehicle_id']?.toString() ?? "N/A"),
-            _infoRow('Template ID', inspection['template_id']?.toString() ?? "N/A"),
+            _infoRow(
+              'Vehicle ID',
+              inspection['vehicle_id']?.toString() ?? "N/A",
+            ),
+            _infoRow(
+              'Template ID',
+              inspection['template_id']?.toString() ?? "N/A",
+            ),
             _infoRow('Date', formattedDate),
             const SizedBox(height: 16),
 
@@ -100,7 +106,10 @@ class InspectionDetailScreen extends StatelessWidget {
               elevation: 2,
               child: ListTile(
                 leading: const Icon(Icons.speed, color: Colors.blue),
-                title: const Text('Start Mileage', style: TextStyle(fontWeight: FontWeight.bold)),
+                title: const Text(
+                  'Start Mileage',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 trailing: Text(
                   inspection['start_mileage']?.toString() ?? "N/A",
                   style: const TextStyle(fontSize: 16),
@@ -114,8 +123,14 @@ class InspectionDetailScreen extends StatelessWidget {
               color: Colors.green.shade50,
               elevation: 2,
               child: ListTile(
-                leading: const Icon(Icons.local_gas_station, color: Colors.green),
-                title: const Text('Fuel Level', style: TextStyle(fontWeight: FontWeight.bold)),
+                leading: const Icon(
+                  Icons.local_gas_station,
+                  color: Colors.green,
+                ),
+                title: const Text(
+                  'Fuel Level',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 trailing: Text('${(inspection['fuel_level'] ?? 0).round()}%'),
               ),
             ),
@@ -126,10 +141,16 @@ class InspectionDetailScreen extends StatelessWidget {
             ],
 
             const SizedBox(height: 8),
-            _infoRow('Odometer Verified', inspection['odometer_verified']?.toString() ?? "false"),
+            _infoRow(
+              'Odometer Verified',
+              inspection['odometer_verified']?.toString() ?? "false",
+            ),
 
             const SizedBox(height: 16),
-            const Text('Results:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Results:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 4),
             Expanded(
               child: ListView(
@@ -150,7 +171,10 @@ class InspectionDetailScreen extends StatelessWidget {
             if (inspection['notes'] != null &&
                 (inspection['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'Notes:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               Text(inspection['notes']),
             ],
           ],

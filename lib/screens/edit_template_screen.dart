@@ -97,8 +97,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error updating template: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error updating template: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -143,8 +144,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error deleting template: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error deleting template: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -171,7 +173,8 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                 child: Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -180,7 +183,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                         const Text(
                           "Template Info",
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
@@ -200,7 +205,9 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                         const Text(
                           "Items",
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         ...itemsControllers.asMap().entries.map((entry) {
@@ -227,8 +234,10 @@ class _EditTemplateScreenState extends State<EditTemplateScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: () => _removeItem(index),
                                 ),
                               ),

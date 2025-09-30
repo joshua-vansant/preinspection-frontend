@@ -101,7 +101,10 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Vehicle: ${widget.vehicle['name'] ?? widget.vehicle['id']}',
+                    'Vehicle: ${(() {
+                      final parts = [widget.vehicle['make'], widget.vehicle['model']].where((v) => v != null && v.toString().isNotEmpty).toList();
+                      return parts.isNotEmpty ? parts.join(' ') : widget.vehicle['id'];
+                    })()}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

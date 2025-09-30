@@ -42,11 +42,15 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
     if (token == null) return;
 
     final items = itemsControllers
-        .map((c) => {
-              "name": c["name"]!.text.trim(),
-              "question": c["question"]!.text.trim(),
-            })
-        .where((item) => item["name"]!.isNotEmpty && item["question"]!.isNotEmpty)
+        .map(
+          (c) => {
+            "name": c["name"]!.text.trim(),
+            "question": c["question"]!.text.trim(),
+          },
+        )
+        .where(
+          (item) => item["name"]!.isNotEmpty && item["question"]!.isNotEmpty,
+        )
         .toList();
 
     if (nameController.text.trim().isEmpty || items.isEmpty) {
@@ -75,8 +79,9 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error creating template: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error creating template: $e")));
     } finally {
       if (mounted) setState(() => creating = false);
     }
@@ -105,8 +110,10 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                     decoration: const InputDecoration(
                       labelText: "Template Name",
                       border: OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -123,7 +130,8 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       elevation: 2,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
@@ -135,7 +143,9 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                                 labelText: "Item ${index + 1} Name",
                                 border: const OutlineInputBorder(),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -145,13 +155,18 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                                 labelText: "Item ${index + 1} Question",
                                 border: const OutlineInputBorder(),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
                             ),
                             Align(
                               alignment: Alignment.centerRight,
                               child: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () => _removeItem(index),
                               ),
                             ),
@@ -173,7 +188,9 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                     label: const Text("Create Template"),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                     ),
                   ),
                 ],

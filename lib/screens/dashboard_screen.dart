@@ -18,7 +18,6 @@ import '../providers/socket_provider.dart';
 import 'package:frontend/utils/date_time_utils.dart';
 import 'manage_organization_screen.dart';
 
-
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -67,7 +66,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
-
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
@@ -170,56 +168,63 @@ class _DriverDashboardState extends State<DriverDashboard> {
     final org = _authProvider?.org;
 
     return Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    if (user != null)
-      Center(
-        child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
-        child: Text(
-          "Welcome, ${user['first_name']} ${user['last_name']}",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22, // larger font
-            color: Colors.blue.shade700, // primary color
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (user != null)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 16,
+              ),
+              child: Text(
+                "Welcome, ${user['first_name']} ${user['last_name']}",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22, // larger font
+                  color: Colors.blue.shade700, // primary color
+                ),
+              ),
+            ),
           ),
-        ),
-        ),
-      ),
-    if (org != null)
-      Center(
-        child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16),
-        child: Text(
-          "Organization: ${org['name']}",
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            color: Colors.blueGrey.shade800,
+        if (org != null)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 4.0,
+                horizontal: 16,
+              ),
+              child: Text(
+                "Organization: ${org['name']}",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: Colors.blueGrey.shade800,
+                ),
+              ),
+            ),
           ),
-        ),
-        ),
-      ),
         const SizedBox(height: 16),
         Center(
           child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const VehicleSelectionScreen()),
-            );
-          },
-          child: const Text("Start New Inspection"),
-        ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const VehicleSelectionScreen(),
+                ),
+              );
+            },
+            child: const Text("Start New Inspection"),
+          ),
         ),
         const SizedBox(height: 16),
         Expanded(
-  child: _isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : _error != null
-          ? Center(child: Text('Error: $_error'))
-          : _history.isEmpty
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? Center(child: Text('Error: $_error'))
+              : _history.isEmpty
               ? const Center(child: Text('No inspections yet.'))
               : RefreshIndicator(
                   onRefresh: _fetchHistory,
@@ -228,14 +233,13 @@ class _DriverDashboardState extends State<DriverDashboard> {
                     itemCount: _history.length,
                     itemBuilder: (_, index) {
                       final item = _history[index];
-                      final formattedDate =
-                          parseUtcToLocal(item['created_at']);
+                      final formattedDate = parseUtcToLocal(item['created_at']);
                       final driverName = item['driver'] != null
                           ? item['driver']['full_name']
                           : 'N/A';
 
-                      final inspectionType =
-                          (item['type'] ?? 'N/A').toUpperCase();
+                      final inspectionType = (item['type'] ?? 'N/A')
+                          .toUpperCase();
 
                       return Card(
                         elevation: 2,
@@ -245,11 +249,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
                         ),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           title: Text(
                             'Inspection #${item['id']}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +266,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
                           ),
                           trailing: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: inspectionType == 'PRE'
                                   ? Colors.green.shade100
@@ -271,10 +278,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
                             child: Text(
                               inspectionType,
                               style: TextStyle(
-                                  color: inspectionType == 'PRE'
-                                      ? Colors.green.shade800
-                                      : Colors.blue.shade800,
-                                  fontWeight: FontWeight.bold),
+                                color: inspectionType == 'PRE'
+                                    ? Colors.green.shade800
+                                    : Colors.blue.shade800,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           onTap: () {
@@ -282,8 +290,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    InspectionDetailScreen(
-                                        inspection: item),
+                                    InspectionDetailScreen(inspection: item),
                               ),
                             );
                           },
@@ -292,13 +299,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
                     },
                   ),
                 ),
-),
+        ),
       ],
     );
   }
 }
-
-
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -422,7 +427,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Text(
                         org['name'] ?? 'Organization',
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -445,9 +452,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ElevatedButton(
           onPressed: () {
             Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const AdminInspectionsScreen()));
+              context,
+              MaterialPageRoute(builder: (_) => const AdminInspectionsScreen()),
+            );
           },
           child: const Text("View Inspections"),
         ),
@@ -475,11 +482,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
         // User List
         Expanded(
-  child: _loading
-      ? const Center(child: CircularProgressIndicator())
-      : _error != null
-          ? Center(child: Text(_error!))
-          : _users.isEmpty
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? Center(child: Text(_error!))
+              : _users.isEmpty
               ? const Center(child: Text("No users in your org yet."))
               : ListView(
                   padding: const EdgeInsets.all(12),
@@ -498,128 +505,123 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           title: Text(
                             '${_users.firstWhere((u) => u['role'] == 'admin')["first_name"]} '
                             '${_users.firstWhere((u) => u['role'] == 'admin')["last_name"]} (Admin)',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
-                            _users.firstWhere((u) => u['role'] == 'admin')
-                                    ["email"] ??
+                            _users.firstWhere(
+                                  (u) => u['role'] == 'admin',
+                                )["email"] ??
                                 "",
                           ),
                         ),
                       ),
 
                     // Drivers Cards
-                    ..._users.where((u) => u['role'] != 'admin').map(
-                      (user) {
-                        return Dismissible(
-                          key: ValueKey(user['id']),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20),
-                            child: const Icon(
-                              Icons.delete,
-                              color: Colors.white,
+                    ..._users.where((u) => u['role'] != 'admin').map((user) {
+                      return Dismissible(
+                        key: ValueKey(user['id']),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        confirmDismiss: (_) async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: const Text("Remove driver?"),
+                              content: Text(
+                                "Are you sure you want to remove ${user['first_name']}?",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text("Cancel"),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("Remove"),
+                                ),
+                              ],
                             ),
-                          ),
-                          confirmDismiss: (_) async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text("Remove driver?"),
-                                content: Text(
-                                    "Are you sure you want to remove ${user['first_name']}?"),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text("Cancel"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text("Remove"),
-                                  ),
-                                ],
+                          );
+                          return confirm ?? false;
+                        },
+                        onDismissed: (_) async {
+                          try {
+                            final token = context.read<AuthProvider>().token!;
+                            await OrganizationService.removeDriver(
+                              token,
+                              user['id'],
+                            );
+                            setState(
+                              () => _users.removeWhere(
+                                (u) => u['id'] == user['id'],
                               ),
                             );
-                            return confirm ?? false;
-                          },
-                          onDismissed: (_) async {
-                            try {
-                              final token =
-                                  context.read<AuthProvider>().token!;
-                              await OrganizationService.removeDriver(
-                                token,
-                                user['id'],
-                              );
-                              setState(() =>
-                                  _users.removeWhere((u) => u['id'] == user['id']));
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "${user['first_name']} removed"),
-                                ),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      Text("Error removing driver: $e"),
-                                ),
-                              );
-                            }
-                          },
-                          child: Card(
-                            elevation: 2,
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ListTile(
-                              leading: const Icon(Icons.person),
-                              title: Text(
-                                '${user["first_name"]} ${user["last_name"]}',
-                                style:
-                                    const TextStyle(fontWeight: FontWeight.bold),
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("${user['first_name']} removed"),
                               ),
-                              subtitle: Text(user["email"] ?? ""),
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  user["role"] ?? "",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error removing driver: $e"),
+                              ),
+                            );
+                          }
+                        },
+                        child: Card(
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            leading: const Icon(Icons.person),
+                            title: Text(
+                              '${user["first_name"]} ${user["last_name"]}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(user["email"] ?? ""),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                user["role"] ?? "",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ).toList(),
+                        ),
+                      );
+                    }).toList(),
 
-                              // No drivers message
-                              if (_users
-                                  .where((u) => u['role'] != 'admin')
-                                  .isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: Text("No drivers in your org yet."),
-                                  ),
-                                ),
-                            ],
-                          ),
-          ),
+                    // No drivers message
+                    if (_users.where((u) => u['role'] != 'admin').isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(
+                          child: Text("No drivers in your org yet."),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
       ],
     );
   }

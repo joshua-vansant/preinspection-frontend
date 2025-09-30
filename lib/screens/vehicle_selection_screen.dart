@@ -44,8 +44,9 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
   Future<void> selectVehicle(Map<String, dynamic> vehicle) async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Not authenticated')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Not authenticated')));
       return;
     }
 
@@ -122,7 +123,9 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                     title: Text(
                       licensePlate,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     subtitle: Text(
                       makeModel,
@@ -138,16 +141,17 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
         onPressed: () async {
           final Map<String, dynamic>? newVehicle =
               await Navigator.push<Map<String, dynamic>>(
-            context,
-            MaterialPageRoute(builder: (_) => const AddVehicleScreen()),
-          );
+                context,
+                MaterialPageRoute(builder: (_) => const AddVehicleScreen()),
+              );
 
           if (newVehicle != null) {
             final token = context.read<AuthProvider>().token;
             if (token != null) {
-              await context
-                  .read<VehicleProvider>()
-                  .addVehicle(token, licensePlate: newVehicle["license_plate"]);
+              await context.read<VehicleProvider>().addVehicle(
+                token,
+                licensePlate: newVehicle["license_plate"],
+              );
             }
           }
         },
