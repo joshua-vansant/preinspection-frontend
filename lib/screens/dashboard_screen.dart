@@ -170,8 +170,39 @@ class _DriverDashboardState extends State<DriverDashboard> {
     final org = _authProvider?.org;
 
     return Column(
-      children: [
-        ElevatedButton(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    if (user != null)
+      Center(
+        child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+        child: Text(
+          "Welcome, ${user['first_name']} ${user['last_name']}",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22, // larger font
+            color: Colors.blue.shade700, // primary color
+          ),
+        ),
+        ),
+      ),
+    if (org != null)
+      Center(
+        child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16),
+        child: Text(
+          "Organization: ${org['name']}",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: Colors.blueGrey.shade800,
+          ),
+        ),
+        ),
+      ),
+        const SizedBox(height: 16),
+        Center(
+          child: ElevatedButton(
           onPressed: () {
             Navigator.push(
               context,
@@ -181,23 +212,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           },
           child: const Text("Start New Inspection"),
         ),
-        const SizedBox(height: 16),
-        if (user != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              "Welcome, ${user['first_name']} ${user['last_name']}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        if (org != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              "Organization: ${org['name']}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
+        ),
         const SizedBox(height: 16),
         Expanded(
   child: _isLoading
