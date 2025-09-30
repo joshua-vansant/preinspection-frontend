@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../services/inspection_service.dart';
+import '../providers/inspection_provider.dart';
 import 'dashboard_screen.dart';
+import 'package:frontend/services/inspection_service.dart';
 
 class InspectionFormScreen extends StatefulWidget {
   final Map<String, dynamic> inspection;
@@ -23,157 +24,215 @@ class InspectionFormScreen extends StatefulWidget {
 }
 
 class _InspectionFormScreenState extends State<InspectionFormScreen> {
-  late Map<String, bool> answers;
   final TextEditingController notesController = TextEditingController();
-  bool isSubmitting = false;
-
-  late Map<String, dynamic> template;
-  late List<dynamic> items;
-  late Map<String, dynamic> results;
-  late int? vehicleId;
-  late String inspectionType;
+  final TextEditingController fuelNotesController = TextEditingController();
+  late TextEditingController startMileageController;
 
   @override
   void initState() {
     super.initState();
 
-    final isEdit = widget.editMode && widget.inspection.containsKey('id');
+    // Initialize controllers
+    notesController.text = widget.inspection['notes'] ?? '';
+    fuelNotesController.text = widget.inspection['fuel_notes'] ?? '';
+    startMileageController = TextEditingController(
+        text: widget.inspection['start_mileage']?.toString() ?? '');
 
-    if (isEdit) {
-      // Editing existing inspection
-      template = widget.inspection['template'] ?? {};
-      results = widget.inspection['results'] ?? {};
-      vehicleId = widget.inspection['vehicle_id'] as int?;
-      inspectionType = widget.inspection['type'] ?? 'pre';
-      notesController.text = widget.inspection['notes'] ?? '';
-    } else {
-      // Creating new inspection
-      template = widget.inspection;
-      results = {};
-      vehicleId = widget.vehicleId;
-      inspectionType = widget.inspectionType ?? 'pre';
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final inspectionProvider = context.read<InspectionProvider>();
+      final isEdit = widget.editMode && widget.inspection.containsKey('id');
 
-    items = template['items'] as List<dynamic>? ?? [];
+      if (isEdit) {
+        // Editing existing inspection
+        inspectionProvider.startInspection(
+          vehicleId: widget.inspection['vehicle_id'],
+          type: widget.inspection['type'] ?? 'pre-trip',
+          initialData: widget.inspection,
+          template: widget.inspection['template'],
+        );
+      } else {
+        // New inspection
+        inspectionProvider.startInspection(
+          vehicleId: widget.vehicleId!,
+          type: widget.inspectionType ?? 'pre-trip',
+          template: widget.inspection,
+        );
 
-    // Initialize answers
-    answers = {
-      for (var item in items)
-        item['id'].toString(): results[item['id'].toString()] == "yes",
-    };
+        // Prefill mileage from last inspection
+        await _prefillMileage();
+      }
+
+      // Sync controllers with currentInspection
+      final current = inspectionProvider.currentInspection;
+      startMileageController.text = current['start_mileage']?.toString() ?? '';
+    });
   }
 
+Future<void> _prefillMileage() async {
+  final token = context.read<AuthProvider>().token;
+  if (token == null || widget.vehicleId == null) return;
+
+  try {
+    final lastInspection =
+        await InspectionService.getLastInspection(token, widget.vehicleId!);
+
+    if (lastInspection == null) return;
+
+    final inspectionProvider = context.read<InspectionProvider>();
+    final type = widget.inspectionType ?? 'pre-trip';
+
+    // Prefill start mileage
+    int prefillMileage = 0;
+
+    // Use last inspection's start_mileage if available
+    if (lastInspection['start_mileage'] != null) {
+      prefillMileage = lastInspection['start_mileage'] as int;
+    }
+
+    print("[DEBUG] Prefilling start mileage with: $prefillMileage");
+
+    startMileageController.text = prefillMileage.toString();
+    inspectionProvider.updateField('start_mileage', prefillMileage);
+  } catch (e) {
+    debugPrint("Error fetching last inspection: $e");
+  }
+}
+
+  /// Submit inspection with validation
   Future<void> _submitInspection() async {
     final token = context.read<AuthProvider>().token;
     if (token == null) return;
 
-    final isEdit = widget.editMode && widget.inspection.containsKey('id');
+    final inspectionProvider = context.read<InspectionProvider>();
 
-    if (!isEdit && (vehicleId == null || inspectionType.isEmpty)) {
+    // Validate required mileage
+    final startMileage = int.tryParse(startMileageController.text);
+    
+    inspectionProvider.updateField('start_mileage', startMileage);
+    inspectionProvider.updateField('notes', notesController.text.trim());
+    inspectionProvider.updateField('fuel_notes', fuelNotesController.text.trim());
+
+    final success = widget.editMode && widget.inspection.containsKey('id')
+        ? await inspectionProvider.updateInspection(token, widget.inspection['id'])
+        : await inspectionProvider.submitInspection(token);
+
+    if (!mounted) return;
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing vehicle or inspection type')),
+        SnackBar(content: Text(widget.editMode ? "Inspection updated" : "Inspection submitted")),
       );
-      return;
-    }
-
-    final inspectionPayload = <String, dynamic>{
-      "template_id": template['id'],
-      if (!isEdit) "vehicle_id": vehicleId,
-      if (!isEdit) "type": inspectionType,
-      "results": {
-        for (var item in items)
-          item['id'].toString(): answers[item['id'].toString()]! ? "yes" : "no",
-      },
-      "notes": notesController.text.trim(),
-    };
-
-    setState(() => isSubmitting = true);
-
-    try {
-      if (isEdit) {
-        await InspectionService.updateInspection(
-          widget.inspection['id'],
-          token,
-          {
-            "results": inspectionPayload['results'],
-            "notes": inspectionPayload['notes'],
-          },
-        );
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Inspection updated")));
-      } else {
-        await InspectionService.submitInspection(token, inspectionPayload);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Inspection submitted ($inspectionType)")),
-        );
-      }
-
-      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
         (route) => false,
       );
-    } catch (e) {
-      if (!mounted) return;
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error submitting inspection: $e")),
+        SnackBar(content: Text("Error submitting inspection: ${inspectionProvider.error}")),
       );
-    } finally {
-      if (mounted) setState(() => isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Inspection: ${template['name'] ?? 'Unknown'}"),
-      ),
-      body: ListView.builder(
-        itemCount: items.length + 1,
-        itemBuilder: (_, index) {
-          if (index < items.length) {
-            final item = items[index];
-            final idStr = item['id'].toString();
-            return ListTile(
-              title: Text(item['name'] ?? ''),
-              subtitle: Text(item['question'] ?? ''),
-              trailing: Switch(
-                value: answers[idStr] ?? false,
-                onChanged: (val) => setState(() => answers[idStr] = val),
-              ),
-            );
-          } else {
-            return Padding(
+    return Consumer<InspectionProvider>(
+      builder: (_, inspectionProvider, __) {
+        final current = inspectionProvider.currentInspection;
+        final templateItems = current['template_items'] as List<dynamic>? ?? [];
+        final answers = current['results'] ?? {};
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text("Inspection: ${current['template_name'] ?? 'Unknown'}"),
+          ),
+          body: SafeArea(
+            child: ListView(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: notesController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: "Additional Notes",
-                  border: OutlineInputBorder(),
+              children: [
+                ...templateItems.map((item) {
+                  final idStr = item['id'].toString();
+                  final answer = answers[idStr] ?? 'no';
+                  return ListTile(
+                    title: Text(item['name'] ?? ''),
+                    subtitle: Text(item['question'] ?? ''),
+                    trailing: Switch(
+                      value: answer == "yes",
+                      onChanged: (val) {
+                        final updatedResults = <String, String>{...answers};
+                        updatedResults[idStr] = val ? "yes" : "no";
+                        inspectionProvider.updateField('results', updatedResults);
+                      },
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: notesController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: "Additional Notes",
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: isSubmitting ? null : _submitInspection,
-        tooltip: "Submit Inspection",
-        child: isSubmitting
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  strokeWidth: 2,
+                const SizedBox(height: 16),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: "Start Mileage"),
+                  controller: startMileageController,
+                  onChanged: (val) => inspectionProvider.updateField(
+                      'start_mileage', int.tryParse(val)),
                 ),
-              )
-            : const Icon(Icons.check),
-      ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Text("Odometer Verified"),
+                    Checkbox(
+                      value: current['odometer_verified'] ?? false,
+                      onChanged: (val) =>
+                          inspectionProvider.updateField('odometer_verified', val),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text("Fuel Level: ${(current['fuel_level'] ?? 0).round()}%"),
+                Slider(
+                  value: (current['fuel_level'] ?? 0).toDouble(),
+                  min: 0,
+                  max: 100,
+                  divisions: 20,
+                  label: "${(current['fuel_level'] ?? 0).round()}%",
+                  onChanged: (val) => inspectionProvider.updateField('fuel_level', val),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: fuelNotesController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: "Fuel Notes",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: inspectionProvider.isSubmitting ? null : _submitInspection,
+            tooltip: "Submit Inspection",
+            child: inspectionProvider.isSubmitting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.check),
+          ),
+        );
+      },
     );
   }
 }
+

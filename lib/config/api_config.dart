@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'https://preinspection-api.onrender.com/';
+  static const String baseUrl = 'https://preinspection-api.onrender.com';
 
   // Returns standard headers, optionally with auth token
   static Map<String, String> headers({String? token}) {

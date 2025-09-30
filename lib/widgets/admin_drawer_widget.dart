@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
-import 'create_organization_widget.dart'; // your new widget to create org
+import 'create_organization_widget.dart';
+import 'package:frontend/screens/admin_templates_screen.dart';
+import 'package:frontend/screens/admin_vehicle_screen.dart';
+import 'package:frontend/screens/manage_organization_screen.dart'; // new screen
 
 class AdminDrawerWidget extends StatefulWidget {
   final VoidCallback? onOrgCreated; // callback to refresh dashboard
@@ -48,7 +51,47 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
               ),
             ),
 
-          // Leave organization button
+          // Manage Organization (only if admin has org)
+          if (authProvider.org != null)
+            ListTile(
+              leading: const Icon(Icons.business),
+              title: const Text("Manage Organization"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ManageOrganizationScreen()),
+                );
+              },
+            ),
+
+          // Manage Templates
+          ListTile(
+            leading: const Icon(Icons.article),
+            title: const Text("Manage Templates"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminTemplatesScreen()),
+              );
+            },
+          ),
+
+          // Manage Vehicles
+          ListTile(
+            leading: const Icon(Icons.directions_car),
+            title: const Text("Manage Vehicles"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminVehiclesScreen()),
+              );
+            },
+          ),
+
+          const Divider(),
+
+          // Leave Organization
           if (authProvider.org != null)
             ListTile(
               leading: const Icon(Icons.exit_to_app),

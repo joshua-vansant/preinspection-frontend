@@ -4,17 +4,28 @@ import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 
 class InspectionService {
-  /// Submit a new inspection
   static Future<void> submitInspection(
     String token,
-    Map<String, dynamic> data,
+    Map<String, dynamic> data, 
   ) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/inspections/submit');
     final response = await http.post(
-      url,
-      headers: ApiConfig.headers(token: token),
-      body: jsonEncode(data),
-    );
+    url,
+    headers: ApiConfig.headers(token: token),
+    body: jsonEncode({
+      'template_id': data['template_id'],
+      'vehicle_id': data['vehicle_id'],
+      'type': data['type'],
+      'results': data['results'],
+      'notes': data['notes'],
+      'start_mileage': data['start_mileage'],
+      'end_mileage': data['end_mileage'],
+      'fuel_level': data['fuel_level'],
+      'fuel_notes': data['fuel_notes'],
+      'odometer_verified': data['odometer_verified'],
+    }),
+  );
+
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       debugPrint("Failed inspection response body: ${response.body}");
@@ -25,6 +36,7 @@ class InspectionService {
 
     debugPrint("Inspection submitted successfully: ${response.body}");
   }
+
 
   /// Get the last inspection for a vehicle
   static Future<Map<String, dynamic>?> getLastInspection(
@@ -72,7 +84,6 @@ class InspectionService {
     }
   }
 
-  /// Fetch a single inspection by ID
   static Future<Map<String, dynamic>> getInspectionById(
     int id,
     String token,
@@ -93,18 +104,31 @@ class InspectionService {
     }
   }
 
-  /// Update an existing inspection
   static Future<void> updateInspection(
     int inspectionId,
     String token,
     Map<String, dynamic> data,
   ) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/inspections/$inspectionId');
+
     final response = await http.put(
-      url,
-      headers: ApiConfig.headers(token: token),
-      body: jsonEncode(data),
-    );
+    url,
+    headers: ApiConfig.headers(token: token),
+    body: jsonEncode({
+      'template_id': data['template_id'],
+      'vehicle_id': data['vehicle_id'],
+      'type': data['type'],
+      'results': data['results'],
+      'notes': data['notes'],
+      'start_mileage': data['start_mileage'],
+      'end_mileage': data['end_mileage'],
+      'fuel_level': data['fuel_level'],
+      'fuel_notes': data['fuel_notes'],
+      'odometer_verified': data['odometer_verified'],
+    }),
+  );
+
+    debugPrint('PUT URL: $url');
 
     if (response.statusCode != 200) {
       throw Exception(

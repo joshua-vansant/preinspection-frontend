@@ -135,4 +135,23 @@ class OrganizationService {
       );
     }
   }
+
+static Future<Map<String, dynamic>> updateOrganization(
+      String token, int orgId, Map<String, dynamic> data) async {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/organizations/$orgId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to update organization: ${response.body}');
+    }
+  }
+
 }

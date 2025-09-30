@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../services/inspection_service.dart';
 import 'package:frontend/utils/date_time_utils.dart';
 
-
 class InspectionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> inspection;
 
@@ -17,9 +16,10 @@ class InspectionDetailScreen extends StatelessWidget {
     final results = inspection['results'] as Map<String, dynamic>? ?? {};
 
     final createdAt = parseUtcToLocal(
-      inspection['created_at'] ?? DateTime.now().toIso8601String(), asDateTime: true,
+      inspection['created_at'] ?? DateTime.now().toIso8601String(),
+      asDateTime: true,
     );
-    
+
     final formattedDate = DateFormat('MMM d, yyyy - h:mm a').format(createdAt);
 
     // Editable within 30 minutes of creation
@@ -48,9 +48,9 @@ class InspectionDetailScreen extends StatelessWidget {
                 try {
                   final fullInspection =
                       await InspectionService.getInspectionById(
-                        inspection['id'],
-                        token,
-                      );
+                    inspection['id'],
+                    token,
+                  );
                   Navigator.pop(context); // remove loading dialog
 
                   final template =
@@ -92,6 +92,15 @@ class InspectionDetailScreen extends StatelessWidget {
             Text('Vehicle ID: ${inspection['vehicle_id'] ?? "N/A"}'),
             Text('Template ID: ${inspection['template_id'] ?? "N/A"}'),
             Text('Date: $formattedDate'),
+            const SizedBox(height: 16),
+            // NEW: Additional fields
+            Text('Start Mileage: ${inspection['start_mileage'] ?? "N/A"}'),
+            Text('End Mileage: ${inspection['end_mileage'] ?? "N/A"}'),
+            Text('Fuel Level: ${(inspection['fuel_level'] ?? 0).round()}%'),
+            if (inspection['fuel_notes'] != null &&
+                (inspection['fuel_notes'] as String).isNotEmpty)
+              Text('Fuel Notes: ${inspection['fuel_notes']}'),
+            Text('Odometer Verified: ${inspection['odometer_verified'] ?? false}'),
             const SizedBox(height: 16),
             const Text(
               'Results:',

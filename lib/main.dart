@@ -8,6 +8,7 @@ import 'providers/inspection_history_provider.dart';
 import 'providers/socket_provider.dart';
 import 'widgets/app_lifecycle_handler.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'providers/inspection_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +47,7 @@ void main() async {
                 return inspectionHistoryProvider;
               },
             ),
+            ChangeNotifierProvider(create: (_) => InspectionProvider()),
           ],
           child: AppLifeCycleHandler(child: const MyApp()),
         ),
