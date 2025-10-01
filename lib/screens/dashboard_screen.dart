@@ -348,7 +348,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
 Future<void> _fetchUsers(AuthProvider auth) async {
-  if (!mounted) return;
+  if (!mounted || auth.org == null) return;
 
   setState(() {
     _loading = true;
@@ -378,7 +378,7 @@ Future<void> _fetchUsers(AuthProvider auth) async {
     }
   }
  void _setupSocket(AuthProvider auth) async {
-  if (auth.org == null) {
+  if (!mounted || auth.org == null) {
     await auth.loadOrg();
     if (!mounted) return;
   }

@@ -96,6 +96,7 @@ class AuthProvider extends ChangeNotifier {
     _token = null;
     _role = null;
     _user = null;
+    _org = null;
     tokenExpiry = null;
     _error = null;
     notifyListeners();
