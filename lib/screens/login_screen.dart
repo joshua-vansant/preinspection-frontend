@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/organization_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/ui_helpers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,9 +21,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool loading = false;
   bool isRegistering = false;
+  bool _rememberMe = false;
 
-  Future<void> handleLogin() async {
+  @override
+  void initState() {
+    super.initState();
+    _loadLastEmail();
+  }
+
+  Future<void> _loadLastEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastEmail = prefs.getString('last_email');
+    if (lastEmail != null) {
+      setState(() {
+        emailController.text = lastEmail;
+        _rememberMe = true;
+      });
+    }
+  }
+
+  Future<void> _handleLogin() async {
     setState(() => loading = true);
+    final authProvider = context.read<AuthProvider>();
 
     try {
       final result = await AuthService.login(
@@ -32,35 +51,39 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final token = result['access_token'];
+      final refreshToken = result['refresh_token'];
       final userData = result['user'];
-      final expiresIn = result['expires_in'];
-      final role = userData['role'] as String?;
 
-      if (token != null && role != null) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        authProvider.setToken(token, role, userData: userData, expiresIn: expiresIn);
-      }
+      if (token != null && userData != null) {
+        authProvider.setToken(
+          token,
+          userData['role'],
+          userData: userData,
+        );
 
-      if (token != null) {
-        final orgData = await OrganizationService.getMyOrg(token);
-        if (orgData != null) {
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          authProvider.setOrg(orgData);
+        final prefs = await SharedPreferences.getInstance();
+        if (_rememberMe) {
+          await prefs.setString('last_email', emailController.text.trim());
+        } else {
+          await prefs.remove('last_email');
         }
-      }
 
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        UIHelpers.showError(context, "Login failed: Invalid response from server");
+      }
     } catch (e) {
       if (!mounted) return;
-      UIHelpers.showError(context, e.toString());
+      UIHelpers.showError(context, "Login failed: $e");
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
-  Future<void> handleRegister() async {
+  Future<void> _handleRegister() async {
     setState(() => loading = true);
+    final authProvider = context.read<AuthProvider>();
 
     try {
       final result = await AuthService.register(
@@ -74,19 +97,24 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final token = result['access_token'];
+      final refreshToken = result['refresh_token'];
       final userData = result['user'];
-      final role = userData['role'] as String?;
 
-      if (token != null && role != null) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        authProvider.setToken(token, role, userData: userData);
+      if (token != null && userData != null) {
+        authProvider.setToken(
+          token,
+          userData['role'],
+          userData: userData,
+        );
+
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        UIHelpers.showError(context, "Registration failed: Invalid response from server");
       }
-
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       if (!mounted) return;
-      UIHelpers.showError(context, e.toString());
+      UIHelpers.showError(context, "Registration failed: $e");
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -128,32 +156,49 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
             ],
-            buildTextField(controller: emailController, label: "Email", type: TextInputType.emailAddress),
+            buildTextField(
+              controller: emailController,
+              label: "Email",
+              type: TextInputType.emailAddress,
+            ),
             const SizedBox(height: 8),
-            buildTextField(controller: passwordController, label: "Password", obscure: true, action: TextInputAction.done),
+            buildTextField(
+              controller: passwordController,
+              label: "Password",
+              obscure: true,
+              action: TextInputAction.done,
+            ),
             const SizedBox(height: 12),
-            loading
-                ? const CircularProgressIndicator()
-                : Column(
-                    children: [
-                      ElevatedButton(
-                        onPressed: isRegistering ? handleRegister : handleLogin,
-                        child: Text(isRegistering ? "Register" : "Login"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            isRegistering = !isRegistering;
-                          });
-                        },
-                        child: Text(
-                          isRegistering
-                              ? "Already have an account? Login"
-                              : "Don't have an account? Register",
-                        ),
-                      ),
-                    ],
+            if (loading)
+              const CircularProgressIndicator()
+            else
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: isRegistering ? _handleRegister : _handleLogin,
+                    child: Text(isRegistering ? "Register" : "Login"),
                   ),
+                  CheckboxListTile(
+                    title: const Text("Remember me"),
+                    value: _rememberMe,
+                    onChanged: (val) {
+                      setState(() => _rememberMe = val ?? false);
+                    },
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        isRegistering = !isRegistering;
+                      });
+                    },
+                    child: Text(
+                      isRegistering
+                          ? "Already have an account? Login"
+                          : "Don't have an account? Register",
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

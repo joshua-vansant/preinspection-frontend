@@ -6,6 +6,7 @@ import '../utils/ui_helpers.dart';
 
 class AuthProvider extends ChangeNotifier {
   String? _token;
+  String? _refresh_token;
   DateTime? tokenExpiry;
   String? _role;
   Map<String, dynamic>? _org;
@@ -14,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
 
   // Getters
   String? get token => _token;
+  String? get refresh_token => _refresh_token;
   String? get role => _role;
   Map<String, dynamic>? get org => _org;
   Map<String, dynamic>? get user => _user;
@@ -111,6 +113,21 @@ class AuthProvider extends ChangeNotifier {
       }
     }
     clearToken();
+  }
+
+    Future<bool> login(String email, String password) async {
+    try {
+      final data = await AuthService.login(email, password);
+
+      _token = data['access_token'];
+      // _refreshToken = data['refresh_token'];
+      _user = data['user']; 
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Login failed: $e');
+      return false;
+    }
   }
 
   Future<void> refreshToken() async {
