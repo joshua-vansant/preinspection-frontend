@@ -112,6 +112,56 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
                 }
               },
             ),
+
+            // Delete Organization (only visible if admin has org)
+if (authProvider.org != null)
+  ListTile(
+    leading: const Icon(Icons.delete_forever, color: Colors.red),
+    title: const Text(
+      "Delete Organization",
+      style: TextStyle(color: Colors.red),
+    ),
+    onTap: () async {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Delete Organization?"),
+          content: const Text(
+              "This will delete your organization and all related templates, vehicles, and inspections. This action cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+
+      final token = authProvider.token;
+      if (token == null) {
+        UIHelpers.showError(context, "Not authenticated");
+        return;
+      }
+
+          try {
+            await OrganizationService.deleteOrg(token); // <-- backend call
+            authProvider.clearOrg(); // remove org from provider
+            if (!context.mounted) return;
+            Navigator.pop(context); // close drawer
+            UIHelpers.showSuccess(context, "Organization deleted successfully!");
+          } catch (e) {
+            if (!context.mounted) return;
+            UIHelpers.showError(context, "Error deleting org: $e");
+          }
+        },
+      ),
+
         ],
       ),
     );

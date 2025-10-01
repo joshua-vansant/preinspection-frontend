@@ -32,7 +32,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void clearOrg() {
+    debugPrint('AuthProvider.clearOrg called, role set to $_role');
     _org = null;
+    if (_user != null) {
+      _user!['org_id'] = null;
+      _user!['role'] = 'driver';
+      _role = 'driver';
+      }
     notifyListeners();
   }
 

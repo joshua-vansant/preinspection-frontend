@@ -32,10 +32,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final role = authProvider.role ?? 'driver';
+    final hasOrg = authProvider.org != null;
+
+    // Determine if admin dashboard should be shown
+    final isAdmin = role == 'admin' && hasOrg;
+    debugPrint('DriverDrawer build: org=${authProvider.org}, hasOrg=$hasOrg');
+
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(role == 'admin' ? "Admin Dashboard" : "Driver Dashboard"),
+        title: Text(isAdmin ? "Admin Dashboard" : "Driver Dashboard"),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -46,18 +52,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      drawer: role == 'driver'
-          ? DriverDrawerWidget()
-          : AdminDrawerWidget(onOrgCreated: () {}),
+      drawer: isAdmin
+          ? AdminDrawerWidget(onOrgCreated: () {})
+          : DriverDrawerWidget(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: role == 'admin' ? AdminDashboard() : DriverDashboard(),
+          child: isAdmin ? AdminDashboard() : DriverDashboard(),
         ),
       ),
     );
   }
 }
+
 
 
 
@@ -98,7 +105,14 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   Future<void> _fetchHistory() async {
-    if (_authProvider?.token == null) return;
+    if (_authProvider?.token == null) {
+    setState(() {
+      _isLoading = false;
+      _history = [];
+      _error = "Authentication token not available.";
+    });
+    return;
+  }
 
     setState(() {
       _isLoading = true;
@@ -136,6 +150,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   void _subscribeToSocket() {
+    final driverId = _authProvider?.user?['id'];
+    if (driverId == null) return;
+
     _socketProvider?.onEvent('inspection_created', (data) {
       final inspection = Map<String, dynamic>.from(data);
       final driverId = _authProvider?.user?['id'];
@@ -177,8 +194,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 "Welcome, ${user['first_name']} ${user['last_name']}",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 22, // larger font
-                  color: Colors.blue.shade700, // primary color
+                  fontSize: 22,
+                  color: Colors.blue.shade700,
                 ),
               ),
             ),
@@ -320,88 +337,96 @@ class _AdminDashboardState extends State<AdminDashboard> {
     super.initState();
     debugPrint('DEBUG: AdminDashboard initState start');
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if(!mounted) return;
       debugPrint('DEBUG: AdminDashboard postFrameCallback');
-      await _fetchUsers();
+      final auth = context.read<AuthProvider>();
+      await _fetchUsers(auth);
       debugPrint('DEBUG: AdminDashboard fetched users');
-      _setupSocket();
+      _setupSocket(auth);  // Pass it in!
       debugPrint('DEBUG: AdminDashboard setup socket done');
     });
   }
 
-  Future<void> _fetchUsers() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+Future<void> _fetchUsers(AuthProvider auth) async {
+  if (!mounted) return;
 
-    final token = context.read<AuthProvider>().token!;
-    try {
-      final users = await OrganizationService.getAllUsers(token);
-      setState(() => _users = users);
-    }catch (e) {
-      if (!mounted) return;
-      UIHelpers.showError(context, e.toString());
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
+  setState(() {
+    _loading = true;
+    _error = null;
+  });
 
-  void _setupSocket() async {
-    final auth = context.read<AuthProvider>();
-
-    if (auth.org == null) {
-      await auth.loadOrg();
-    }
-
-    final orgId = auth.org?['id'];
-    if (orgId == null) {
-      debugPrint('DEBUG: No org ID available for socket join.');
+  final token = auth.token;
+  if (token == null) {
+    if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'No auth token';
+      });
       return;
     }
 
-    _socket = IO.io(
-      ApiConfig.baseUrl,
-      IO.OptionBuilder()
-          .setTransports(['websocket'])
-          .enableAutoConnect()
-          .build(),
-    );
-
-    _socket!.connect();
-
-    _socket!.on('driver_joined', (data) {
-      final newDriver = Map<String, dynamic>.from(data);
-      debugPrint('DEBUG: Driver joined: $newDriver');
-
-      setState(() {
-        _users.removeWhere((u) => u['id'] == newDriver['id']);
-
-        final adminIndex = _users.indexWhere((u) => u['role'] == 'admin');
-        if (adminIndex >= 0) {
-          _users.insert(adminIndex + 1, newDriver);
-        } else {
-          _users.add(newDriver);
-        }
-      });
-    });
-
-    _socket!.on('driver_left', (data) {
-      final driverId = data['id'];
-      if (driverId == null) return;
-
-      setState(() {
-        _users.removeWhere((u) => u['id'] == driverId);
-      });
-    });
-
-    _socket!.onConnect((_) {
-      debugPrint('DEBUG: Socket connected');
-      _socket!.emit('join_org', {'org_id': orgId});
-    });
-
-    _socket!.onDisconnect((_) => debugPrint('DEBUG: Socket disconnected'));
-    _socket!.onError((data) => debugPrint('DEBUG: Socket error: $data'));
+    try {
+      final users = await OrganizationService.getAllUsers(token);
+      if (!mounted) return;
+      setState(() => _users = users);
+    } catch (e) {
+      if (!mounted) return;
+      UIHelpers.showError(context, e.toString());
+    } finally {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
   }
+ void _setupSocket(AuthProvider auth) async {
+  if (auth.org == null) {
+    await auth.loadOrg();
+    if (!mounted) return;
+  }
+
+  final orgId = auth.org?['id'];
+  if (orgId == null) return;
+
+  _socket = IO.io(
+    ApiConfig.baseUrl,
+    IO.OptionBuilder()
+        .setTransports(['websocket'])
+        .enableAutoConnect()
+        .build(),
+  );
+
+  _socket!.connect();
+
+  _socket!.on('driver_joined', (data) {
+    if (!mounted) return;
+    final newDriver = Map<String, dynamic>.from(data);
+    setState(() {
+      _users.removeWhere((u) => u['id'] == newDriver['id']);
+      final adminIndex = _users.indexWhere((u) => u['role'] == 'admin');
+      if (adminIndex >= 0) {
+        _users.insert(adminIndex + 1, newDriver);
+      } else {
+        _users.add(newDriver);
+      }
+    });
+  });
+
+  _socket!.on('driver_left', (data) {
+    if (!mounted) return;
+    final driverId = data['id'];
+    if (driverId == null) return;
+    setState(() {
+      _users.removeWhere((u) => u['id'] == driverId);
+    });
+  });
+
+  _socket!.onConnect((_) {
+    if (!mounted) return;
+    _socket!.emit('join_org', {'org_id': orgId});
+  });
+
+  _socket!.onDisconnect((_) => debugPrint('Socket disconnected'));
+  _socket!.onError((data) => debugPrint('Socket error: $data'));
+}
 
   @override
   void dispose() {
@@ -413,6 +438,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final org = auth.org;
+
+    if (auth.org == null) {
+      if (_users.isNotEmpty || _socket != null) {
+        setState(() {
+          _users = [];
+          _socket?.disconnect();
+          _socket = null;
+        });
+      }
+    }
+
+
+    if (org == null) {
+      // Admin has no org — show a friendly message
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'You are not part of any organization.',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ManageOrganizationScreen()),
+                );
+              },
+              child: const Text('Create or Join Organization'),
+            ),
+          ],
+        ),
+      );
+    }
+
 
     return SafeArea(
       child: Column(
@@ -456,8 +518,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         // Buttons
         const InviteDriverWidget(),
         const SizedBox(height: 12),
-        const InviteAdminWidget(),
-        const SizedBox(height: 12),
+        // const InviteAdminWidget(),
+        // const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () {
             Navigator.push(

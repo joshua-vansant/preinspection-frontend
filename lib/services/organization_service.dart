@@ -51,7 +51,20 @@ static Future<Map<String, dynamic>> redeemAdminInvite(
   }
 }
 
+  static Future<void> deleteOrg(String token) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/organizations/delete');
 
+    final response = await http.delete(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to delete organization: ${response.statusCode} ${response.body}',
+      );
+    }
+  }
 
 
   static Future<Map<String, dynamic>?> getMyOrg(String token) async {
