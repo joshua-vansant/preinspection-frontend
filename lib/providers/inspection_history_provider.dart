@@ -35,7 +35,7 @@ class InspectionHistoryProvider extends ChangeNotifier {
     } catch (e) {
       _history = [];
       _error = UIHelpers.parseError(e.toString());
-      debugPrint('InspectionHistory error: $_error');
+      debugPrint('DEBUG: InspectionHistory error: $_error');
     } finally {
       _isLoading = false;
       notifyListeners();

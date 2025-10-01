@@ -128,7 +128,7 @@ class InspectionService {
     }),
   );
 
-    debugPrint('PUT URL: $url');
+    debugPrint('DEBUG: PUT URL: $url');
 
     if (response.statusCode != 200) {
       throw Exception(

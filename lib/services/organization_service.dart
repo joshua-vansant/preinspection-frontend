@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
@@ -23,6 +24,35 @@ class OrganizationService {
       );
     }
   }
+
+
+static Future<Map<String, dynamic>> redeemAdminInvite(
+  String token,
+  String code,
+) async {
+  final url = Uri.parse('${ApiConfig.baseUrl}/admins/redeem');
+
+  final response = await http.post(
+    url,
+    headers: ApiConfig.headers(token: token),
+    body: jsonEncode({'code': code}),
+  );
+
+  debugPrint("DEBUG: HTTP status: ${response.statusCode}, body: ${response.body}");
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = Map<String, dynamic>.from(jsonDecode(response.body));
+    debugPrint("DEBUG: decoded response: $data");
+    return data;
+  } else {
+    throw Exception(
+      'Failed to redeem admin invite: ${response.statusCode} ${response.body}',
+    );
+  }
+}
+
+
+
 
   static Future<Map<String, dynamic>?> getMyOrg(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/organizations/me');
@@ -82,6 +112,35 @@ class OrganizationService {
     final data = jsonDecode(response.body);
     return data["invite_code"];
   }
+
+  static Future<String> getAdminInviteCode(String token) async {
+  final response = await http.get(
+    Uri.parse("${ApiConfig.baseUrl}/organizations/admin_code"),
+    headers: ApiConfig.headers(token: token),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception("Failed to fetch admin invite code: ${response.body}");
+  }
+
+  final data = jsonDecode(response.body);
+  return data["admin_invite_code"] as String;
+}
+
+static Future<String> getNewAdminCode(String token) async {
+  final response = await http.post(
+    Uri.parse("${ApiConfig.baseUrl}/organizations/admin_code/regenerate"),
+    headers: ApiConfig.headers(token: token),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception("Failed to regenerate admin invite code: ${response.body}");
+  }
+
+  final data = jsonDecode(response.body);
+  return data["admin_invite_code"] as String;
+}
+
 
   static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/organizations/users');
@@ -152,6 +211,10 @@ static Future<Map<String, dynamic>> updateOrganization(
     } else {
       throw Exception('Failed to update organization: ${response.body}');
     }
+  
   }
+
+
+  
 
 }

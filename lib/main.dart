@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
@@ -9,9 +11,22 @@ import 'providers/socket_provider.dart';
 import 'widgets/app_lifecycle_handler.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'providers/inspection_provider.dart';
+import 'package:flutter/rendering.dart';
+
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+  };
+
+  runZonedGuarded(() {
+    debugPaintSizeEnabled = false;
+    runApp(const MyApp());
+  }, (error, stack) {
+    print('Caught by runZonedGuarded: $error\n$stack');
+  });
+
+  SentryWidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Sentry
   await SentryFlutter.init(

@@ -66,17 +66,23 @@ class AuthProvider extends ChangeNotifier {
 
   void setUser(Map<String, dynamic>? userData) {
     _user = userData;
+    _role = _user?['role'];
+    debugPrint('DEBUG AuthProvider.setUser called, role=$_role');
+
     if (_user != null) {
       Sentry.configureScope((scope) {
         scope.setUser(SentryUser(
           id: _user!['id'].toString(),
           email: _user!['email'],
-          username: _user!['first_name'] + ' ' + _user!['last_name'],
+          // username: _user!['first_name'] + ' ' + _user!['last_name'],
         ));
       });
     } else {
       Sentry.configureScope((scope) => scope.setUser(null));
     }
+    // final authProvider = context.watch<AuthProvider>();
+    // debugPrint("AuthProvider role after redeem: ${authProvider.role}");
+
     notifyListeners();
   }
 

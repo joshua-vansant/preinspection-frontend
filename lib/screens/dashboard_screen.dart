@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/admin_templates_screen.dart';
 import 'package:frontend/screens/vehicle_selection_screen.dart';
 import 'package:frontend/utils/ui_helpers.dart';
+import 'package:frontend/widgets/invite_admin_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -19,9 +20,14 @@ import '../providers/socket_provider.dart';
 import 'package:frontend/utils/date_time_utils.dart';
 import 'manage_organization_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
@@ -42,22 +48,7 @@ class DashboardScreen extends StatelessWidget {
       ),
       drawer: role == 'driver'
           ? DriverDrawerWidget()
-          : AdminDrawerWidget(
-              onOrgCreated: () {
-                // Find the AdminDashboardState and refresh users
-                final adminDashboardState = context
-                    .findAncestorStateOfType<_AdminDashboardState>();
-                adminDashboardState?._fetchUsers(); // refresh user list
-                // Join socket room again
-                final orgId = context.read<AuthProvider>().org?['id'];
-                if (orgId != null) {
-                  adminDashboardState?._socket?.emit('join_org', {
-                    'org_id': orgId,
-                  });
-                }
-              },
-            ),
-
+          : AdminDrawerWidget(onOrgCreated: () {}),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -67,6 +58,8 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+
+
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
@@ -158,16 +151,19 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   @override
   void dispose() {
+    debugPrint('DEBUG: DriverDashboard disposed');
     _socketProvider?.offEvent('inspection_created');
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
     final user = _authProvider?.user;
     final org = _authProvider?.org;
 
-    return Column(
+    return SafeArea(
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (user != null)
@@ -301,6 +297,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 ),
         ),
       ],
+      ),
     );
   }
 }
@@ -321,8 +318,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    _fetchUsers();
-    _setupSocket();
+    debugPrint('DEBUG: AdminDashboard initState start');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      debugPrint('DEBUG: AdminDashboard postFrameCallback');
+      await _fetchUsers();
+      debugPrint('DEBUG: AdminDashboard fetched users');
+      _setupSocket();
+      debugPrint('DEBUG: AdminDashboard setup socket done');
+    });
   }
 
   Future<void> _fetchUsers() async {
@@ -352,7 +355,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     final orgId = auth.org?['id'];
     if (orgId == null) {
-      debugPrint('No org ID available for socket join.');
+      debugPrint('DEBUG: No org ID available for socket join.');
       return;
     }
 
@@ -368,7 +371,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     _socket!.on('driver_joined', (data) {
       final newDriver = Map<String, dynamic>.from(data);
-      debugPrint('Driver joined: $newDriver');
+      debugPrint('DEBUG: Driver joined: $newDriver');
 
       setState(() {
         _users.removeWhere((u) => u['id'] == newDriver['id']);
@@ -392,12 +395,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
 
     _socket!.onConnect((_) {
-      debugPrint('Socket connected');
+      debugPrint('DEBUG: Socket connected');
       _socket!.emit('join_org', {'org_id': orgId});
     });
 
-    _socket!.onDisconnect((_) => debugPrint('Socket disconnected'));
-    _socket!.onError((data) => debugPrint('Socket error: $data'));
+    _socket!.onDisconnect((_) => debugPrint('DEBUG: Socket disconnected'));
+    _socket!.onError((data) => debugPrint('DEBUG: Socket error: $data'));
   }
 
   @override
@@ -411,7 +414,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final auth = context.watch<AuthProvider>();
     final org = auth.org;
 
-    return Column(
+    return SafeArea(
+      child: Column(
       children: [
         // Organization Info Card
         if (org != null)
@@ -419,7 +423,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             margin: const EdgeInsets.all(12),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
+              child: SafeArea(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -443,12 +448,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       org['phone_number'].isNotEmpty)
                     Text('Phone: ${org['phone_number']}'),
                 ],
+                ),
               ),
             ),
           ),
 
         // Buttons
         const InviteDriverWidget(),
+        const SizedBox(height: 12),
+        const InviteAdminWidget(),
         const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () {
@@ -460,26 +468,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: const Text("View Inspections"),
         ),
         const SizedBox(height: 12),
-        // ElevatedButton(
-        //   onPressed: () {
-        //     Navigator.push(
-        //         context,
-        //         MaterialPageRoute(
-        //             builder: (_) => const AdminTemplatesScreen()));
-        //   },
-        //   child: const Text("Manage Templates"),
-        // ),
-        // const SizedBox(height: 12),
-        // ElevatedButton(
-        //   onPressed: () {
-        //     Navigator.push(
-        //         context,
-        //         MaterialPageRoute(
-        //             builder: (_) => const AdminVehiclesScreen()));
-        //   },
-        //   child: const Text("Manage Vehicles"),
-        // ),
-        // const SizedBox(height: 16),
 
         // User List
         Expanded(
@@ -622,6 +610,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
         ),
       ],
+      ),
     );
   }
 }

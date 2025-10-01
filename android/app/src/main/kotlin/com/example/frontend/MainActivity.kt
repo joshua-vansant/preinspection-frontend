@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.jmvs.inspectionapp
 
 import io.flutter.embedding.android.FlutterActivity
 
