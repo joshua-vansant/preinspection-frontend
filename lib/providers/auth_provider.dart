@@ -21,6 +21,13 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   String? get error => _error;
 
+  bool get hasOrg => _org != null;
+
+  int? get orgId => _org?['id'] as int?;
+  String? get orgName => _org?['name'] as String?;
+  bool get isAdmin => _user?['role'] == 'admin';
+
+
   bool get isAuth {
     if (tokenExpiry == null || _token == null) return false;
     return tokenExpiry!.isAfter(DateTime.now());
@@ -115,13 +122,12 @@ class AuthProvider extends ChangeNotifier {
     clearToken();
   }
 
-    Future<bool> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
       final data = await AuthService.login(email, password);
-
       _token = data['access_token'];
-      // _refreshToken = data['refresh_token'];
-      _user = data['user']; 
+      _user = data['user'];
+      _role = _user?['role']; // <-- keep role updated
       notifyListeners();
       return true;
     } catch (e) {
@@ -129,6 +135,7 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
+
 
   Future<void> refreshToken() async {
     if (_token == null) throw Exception("No token to refresh");

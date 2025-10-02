@@ -20,11 +20,8 @@ class SocketProvider extends ChangeNotifier {
     _context = context;
   }
 
-  void _initSocket() async {
-    if (_socket != null) {
-      debugPrint("SocketProvider: Socket already initialized, skipping.");
-      return; 
-    }
+  Future<void> _initSocket() async {
+    if (_socket != null) return;
 
     final orgId = authProvider.org?['id'];
     if (orgId == null) {
@@ -40,7 +37,11 @@ class SocketProvider extends ChangeNotifier {
     final finalOrgId = authProvider.org?['id'];
     if (finalOrgId == null) {
       debugPrint("SocketProvider: No org ID, cannot initialize socket.");
-      if (_context != null) UIHelpers.showError(_context!, "Unable to connect: no organization found");
+      if (_context != null)
+        UIHelpers.showError(
+          _context!,
+          "Unable to connect: no organization found",
+        );
       return;
     }
 
@@ -51,8 +52,8 @@ class SocketProvider extends ChangeNotifier {
       uri,
       IO.OptionBuilder()
           .setTransports(['websocket'])
-          .disableAutoConnect() 
-          .enableReconnection() 
+          .disableAutoConnect()
+          .enableReconnection()
           .build(),
     );
 
@@ -61,14 +62,9 @@ class SocketProvider extends ChangeNotifier {
       _socket!.emit('join_org', {'org_id': finalOrgId});
     });
 
-    _socket!.onDisconnect((_) {
-    });
-
-    _socket!.onConnectError((err) {
-    });
-
-    _socket!.onError((err) {
-    });
+    _socket!.onDisconnect((_) {});
+    _socket!.onConnectError((err) {});
+    _socket!.onError((err) {});
 
     _socket!.onAny((event, data) {
       if (_listeners.containsKey(event)) {
@@ -96,7 +92,13 @@ class SocketProvider extends ChangeNotifier {
     }
   }
 
-  void reconnectIfNeeded() {
+  void reconnectIfNeeded() async {
+    if (_socket == null || !_socket!.connected) {
+      _socket?.disconnect();
+      _socket = null;
+      _listeners.clear();
+      await _initSocket();
+    }
     if (_socket == null || !_socket!.connected) {
       _initSocket();
     }

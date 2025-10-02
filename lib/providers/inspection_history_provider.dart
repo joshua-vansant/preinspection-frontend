@@ -70,11 +70,12 @@ class InspectionHistoryProvider extends ChangeNotifier {
   void _listenForSocketUpdates() {
     socketProvider.onEvent('inspection_update', (data) {
       debugPrint("🔔 Socket inspection update: $data");
-      if (data is Map<String, dynamic>) {
+      if (data is Map<String, dynamic>) { 
         addInspection(data);
       }
     });
   }
+
 
   @override
   void dispose() {

@@ -14,9 +14,10 @@ class InspectionProvider extends ChangeNotifier {
   /// Initialize a new inspection (PRE or POST)
   void startInspection({
     required int vehicleId,
-    required String type, // 'pre-trip' or 'post-trip'
+    required String type,
     Map<String, dynamic>? initialData,
     Map<String, dynamic>? template,
+    Map<String, dynamic>? selectedVehicle,
   }) {
     _currentInspection = {
       'vehicle_id': vehicleId,
@@ -33,11 +34,13 @@ class InspectionProvider extends ChangeNotifier {
       'notes': null,
       'template_name': template?['name'] ?? 'Unknown',
       'template_items': template?['items'] ?? [],
+      'org_id': selectedVehicle?['org_id'], // <-- optional
       if (initialData != null) ...initialData,
     };
     _error = '';
     notifyListeners();
   }
+
 
   /// Update a single field in the current inspection
   void updateField(String key, dynamic value) {

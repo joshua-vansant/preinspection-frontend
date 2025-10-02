@@ -51,6 +51,26 @@ static Future<Map<String, dynamic>> redeemAdminInvite(
   }
 }
 
+static Future<void> deleteDriver(String token) async {
+  final response = await http.delete(
+    Uri.parse("${ApiConfig.baseUrl}/users/delete"),
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    print("Status: ${response.statusCode}");
+    print("Raw body: ${response.body}");
+    try {
+      final error = jsonDecode(response.body)['error'] ?? 'Unknown error';
+      throw Exception(error);
+    } catch (_) {
+      throw Exception("Unexpected response: ${response.body}");
+    }
+  }
+}
+
   static Future<void> deleteOrg(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/organizations/delete');
 

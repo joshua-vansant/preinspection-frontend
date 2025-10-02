@@ -13,7 +13,6 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'providers/inspection_provider.dart';
 import 'package:flutter/rendering.dart';
 
-
 void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
@@ -31,41 +30,54 @@ void main() async {
   // Initialize Sentry
   await SentryFlutter.init(
     (options) {
-      options.dsn = 'https://6e997a495ed33316994592e01cce24f3@o4510095188688896.ingest.us.sentry.io/4510095241510912';
+      options.dsn =
+          'https://6e997a495ed33316994592e01cce24f3@o4510095188688896.ingest.us.sentry.io/4510095241510912';
       options.tracesSampleRate = 1.0;
     },
     appRunner: () {
       runApp(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => AuthProvider()),
+   MultiProvider(
+  providers: [
+    ChangeNotifierProvider(create: (_) => AuthProvider()),
 
-            // Socket depends on Auth
-            ChangeNotifierProxyProvider<AuthProvider, SocketProvider>(
-              create: (context) =>
-                  SocketProvider(authProvider: context.read<AuthProvider>()),
-              update: (context, authProvider, socketProvider) {
-                socketProvider ??= SocketProvider(authProvider: authProvider);
-                return socketProvider;
-              },
-            ),
+    // VehicleProvider must be above anything that reads it
+    ChangeNotifierProvider(create: (_) => VehicleProvider()),
 
-            ChangeNotifierProvider(create: (_) => VehicleProvider()),
+    ChangeNotifierProxyProvider<AuthProvider, SocketProvider>(
+      create: (context) =>
+          SocketProvider(authProvider: context.read<AuthProvider>()),
+      update: (context, authProvider, socketProvider) {
+        socketProvider ??=
+            SocketProvider(authProvider: authProvider);
 
-            // InspectionHistory depends on SocketProvider
-            ChangeNotifierProxyProvider<SocketProvider, InspectionHistoryProvider>(
-              create: (context) =>
-                  InspectionHistoryProvider(socketProvider: context.read<SocketProvider>()),
-              update: (context, socketProvider, inspectionHistoryProvider) {
-                inspectionHistoryProvider ??=
-                    InspectionHistoryProvider(socketProvider: socketProvider);
-                return inspectionHistoryProvider;
-              },
-            ),
-            ChangeNotifierProvider(create: (_) => InspectionProvider()),
-          ],
-          child: AppLifeCycleHandler(child: const MyApp()),
-        ),
+        authProvider.addListener(() {
+          if(!context.mounted) return;
+          socketProvider?.reconnectIfNeeded();
+
+          final vehicleProvider = context.read<VehicleProvider>();
+          if (authProvider.token != null && authProvider.org != null) {
+            vehicleProvider.fetchVehicles(authProvider.token!);
+          }
+        });
+
+        return socketProvider;
+      },
+    ),
+
+    ChangeNotifierProxyProvider<SocketProvider, InspectionHistoryProvider>(
+      create: (context) => InspectionHistoryProvider(
+          socketProvider: context.read<SocketProvider>()),
+      update: (context, socketProvider, inspectionHistoryProvider) {
+        inspectionHistoryProvider ??= InspectionHistoryProvider(
+            socketProvider: socketProvider);
+        return inspectionHistoryProvider;
+      },
+    ),
+
+    ChangeNotifierProvider(create: (_) => InspectionProvider()),
+  ],
+  child: AppLifeCycleHandler(child: const MyApp()),
+)
       );
     },
   );

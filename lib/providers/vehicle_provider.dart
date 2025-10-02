@@ -28,18 +28,38 @@ class VehicleProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Fetch vehicles from the backend and update provider
-  Future<void> fetchVehicles(String token, {BuildContext? context}) async {
-    try {
-      final result = await VehicleService.getVehicles(token);
-      _vehicles = result;
-      notifyListeners();
-    } catch (e) {
-      final errorMessage = UIHelpers.parseError(e.toString());
-      if (context != null) UIHelpers.showError(context, errorMessage);
-      debugPrint("VehicleProvider fetchVehicles error: $errorMessage");
-    }
+  //// Fetch vehicles from the backend and update provider
+Future<void> fetchVehicles(String token, {BuildContext? context}) async {
+  try {
+    final result = await VehicleService.getVehicles(token);
+
+    // Fetch last inspection for each vehicle in parallel
+    final List<Map<String, dynamic>> vehiclesWithInspections = await Future.wait(
+      result.map((vehicle) async {
+        try {
+          final lastInspection = await VehicleService.getLastInspectionForVehicle(token, vehicle['id']);
+          return {
+            ...vehicle,
+            'lastInspection': lastInspection,
+          };
+        } catch (e) {
+          debugPrint("Failed to fetch last inspection for vehicle ${vehicle['id']}: $e");
+          return {
+            ...vehicle,
+            'lastInspection': null,
+          };
+        }
+      }),
+    );
+
+    _vehicles = vehiclesWithInspections;
+    notifyListeners();
+  } catch (e) {
+    final errorMessage = UIHelpers.parseError(e.toString());
+    if (context != null) UIHelpers.showError(context, errorMessage);
+    debugPrint("VehicleProvider fetchVehicles error: $errorMessage");
   }
+}
 
   /// Add a new vehicle
   Future<void> addVehicle(
@@ -121,4 +141,11 @@ class VehicleProvider extends ChangeNotifier {
       debugPrint("VehicleProvider deleteVehicle error: $errorMessage");
     }
   }
+
+  List<Map<String, dynamic>> vehiclesForOrg(int orgId) {
+    return _vehicles.where((v) => v['org_id'] == orgId).toList();
+  }
+
+  
+
 }
