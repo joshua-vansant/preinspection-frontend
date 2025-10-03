@@ -25,51 +25,52 @@ class OrganizationService {
     }
   }
 
+  static Future<Map<String, dynamic>> redeemAdminInvite(
+    String token,
+    String code,
+  ) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/admins/redeem');
 
-static Future<Map<String, dynamic>> redeemAdminInvite(
-  String token,
-  String code,
-) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}/admins/redeem');
-
-  final response = await http.post(
-    url,
-    headers: ApiConfig.headers(token: token),
-    body: jsonEncode({'code': code}),
-  );
-
-  debugPrint("DEBUG: HTTP status: ${response.statusCode}, body: ${response.body}");
-
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = Map<String, dynamic>.from(jsonDecode(response.body));
-    debugPrint("DEBUG: decoded response: $data");
-    return data;
-  } else {
-    throw Exception(
-      'Failed to redeem admin invite: ${response.statusCode} ${response.body}',
+    final response = await http.post(
+      url,
+      headers: ApiConfig.headers(token: token),
+      body: jsonEncode({'code': code}),
     );
-  }
-}
 
-static Future<void> deleteDriver(String token) async {
-  final response = await http.delete(
-    Uri.parse("${ApiConfig.baseUrl}/users/delete"),
-    headers: {
-      'Authorization': 'Bearer $token',
-    },
-  );
+    debugPrint(
+      "DEBUG: HTTP status: ${response.statusCode}, body: ${response.body}",
+    );
 
-  if (response.statusCode != 200) {
-    print("Status: ${response.statusCode}");
-    print("Raw body: ${response.body}");
-    try {
-      final error = jsonDecode(response.body)['error'] ?? 'Unknown error';
-      throw Exception(error);
-    } catch (_) {
-      throw Exception("Unexpected response: ${response.body}");
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = Map<String, dynamic>.from(
+        jsonDecode(response.body),
+      );
+      debugPrint("DEBUG: decoded response: $data");
+      return data;
+    } else {
+      throw Exception(
+        'Failed to redeem admin invite: ${response.statusCode} ${response.body}',
+      );
     }
   }
-}
+
+  static Future<void> deleteDriver(String token) async {
+    final response = await http.delete(
+      Uri.parse("${ApiConfig.baseUrl}/users/delete"),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      print("Status: ${response.statusCode}");
+      print("Raw body: ${response.body}");
+      try {
+        final error = jsonDecode(response.body)['error'] ?? 'Unknown error';
+        throw Exception(error);
+      } catch (_) {
+        throw Exception("Unexpected response: ${response.body}");
+      }
+    }
+  }
 
   static Future<void> deleteOrg(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/organizations/delete');
@@ -85,7 +86,6 @@ static Future<void> deleteDriver(String token) async {
       );
     }
   }
-
 
   static Future<Map<String, dynamic>?> getMyOrg(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/organizations/me');
@@ -146,35 +146,6 @@ static Future<void> deleteDriver(String token) async {
     return data["invite_code"];
   }
 
-  static Future<String> getAdminInviteCode(String token) async {
-  final response = await http.get(
-    Uri.parse("${ApiConfig.baseUrl}/organizations/admin_code"),
-    headers: ApiConfig.headers(token: token),
-  );
-
-  if (response.statusCode != 200) {
-    throw Exception("Failed to fetch admin invite code: ${response.body}");
-  }
-
-  final data = jsonDecode(response.body);
-  return data["admin_invite_code"] as String;
-}
-
-static Future<String> getNewAdminCode(String token) async {
-  final response = await http.post(
-    Uri.parse("${ApiConfig.baseUrl}/organizations/admin_code/regenerate"),
-    headers: ApiConfig.headers(token: token),
-  );
-
-  if (response.statusCode != 200) {
-    throw Exception("Failed to regenerate admin invite code: ${response.body}");
-  }
-
-  final data = jsonDecode(response.body);
-  return data["admin_invite_code"] as String;
-}
-
-
   static Future<List<Map<String, dynamic>>> getAllUsers(String token) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/organizations/users');
     final response = await http.get(
@@ -228,15 +199,18 @@ static Future<String> getNewAdminCode(String token) async {
     }
   }
 
-static Future<Map<String, dynamic>> updateOrganization(
-      String token, int orgId, Map<String, dynamic> data) async {
-      final response = await http.put(
-        Uri.parse('${ApiConfig.baseUrl}/organizations/$orgId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
+  static Future<Map<String, dynamic>> updateOrganization(
+    String token,
+    int orgId,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/organizations/$orgId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
     );
 
     if (response.statusCode == 200) {
@@ -244,10 +218,5 @@ static Future<Map<String, dynamic>> updateOrganization(
     } else {
       throw Exception('Failed to update organization: ${response.body}');
     }
-  
   }
-
-
-  
-
 }

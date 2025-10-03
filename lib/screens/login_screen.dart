@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../providers/auth_provider.dart';
@@ -19,9 +20,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final lastNameController = TextEditingController();
   final phoneController = TextEditingController();
 
-  bool loading = false;
   bool isRegistering = false;
   bool _rememberMe = false;
+  bool _loading = false;
 
   @override
   void initState() {
@@ -33,15 +34,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
     final lastEmail = prefs.getString('last_email');
     if (lastEmail != null) {
-      setState(() {
-        emailController.text = lastEmail;
-        _rememberMe = true;
-      });
+      emailController.text = lastEmail;
+      _rememberMe = true;
     }
   }
 
   Future<void> _handleLogin() async {
-    setState(() => loading = true);
+    setState(() => _loading = true);
     final authProvider = context.read<AuthProvider>();
 
     try {
@@ -51,15 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final token = result['access_token'];
-      final refreshToken = result['refresh_token'];
       final userData = result['user'];
 
       if (token != null && userData != null) {
-        authProvider.setToken(
-          token,
-          userData['role'],
-          userData: userData,
-        );
+        authProvider.setToken(token, userData['role'], userData: userData);
 
         final prefs = await SharedPreferences.getInstance();
         if (_rememberMe) {
@@ -69,20 +63,23 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
       } else {
-        UIHelpers.showError(context, "Login failed: Invalid response from server");
+        UIHelpers.showError(context, "Login failed: Invalid server response");
       }
     } catch (e) {
       if (!mounted) return;
       UIHelpers.showError(context, "Login failed: $e");
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _handleRegister() async {
-    setState(() => loading = true);
+    setState(() => _loading = true);
     final authProvider = context.read<AuthProvider>();
 
     try {
@@ -97,26 +94,27 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final token = result['access_token'];
-      final refreshToken = result['refresh_token'];
       final userData = result['user'];
 
       if (token != null && userData != null) {
-        authProvider.setToken(
-          token,
-          userData['role'],
-          userData: userData,
-        );
+        authProvider.setToken(token, userData['role'], userData: userData);
 
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
       } else {
-        UIHelpers.showError(context, "Registration failed: Invalid response from server");
+        UIHelpers.showError(
+          context,
+          "Registration failed: Invalid server response",
+        );
       }
     } catch (e) {
       if (!mounted) return;
       UIHelpers.showError(context, "Registration failed: $e");
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -145,9 +143,15 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             if (isRegistering) ...[
-              buildTextField(controller: firstNameController, label: "First Name"),
+              buildTextField(
+                controller: firstNameController,
+                label: "First Name",
+              ),
               const SizedBox(height: 8),
-              buildTextField(controller: lastNameController, label: "Last Name"),
+              buildTextField(
+                controller: lastNameController,
+                label: "Last Name",
+              ),
               const SizedBox(height: 8),
               buildTextField(
                 controller: phoneController,
@@ -169,36 +173,34 @@ class _LoginScreenState extends State<LoginScreen> {
               action: TextInputAction.done,
             ),
             const SizedBox(height: 12),
-            if (loading)
-              const CircularProgressIndicator()
-            else
-              Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: isRegistering ? _handleRegister : _handleLogin,
-                    child: Text(isRegistering ? "Register" : "Login"),
+            _loading
+                ? const CircularProgressIndicator()
+                : Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: isRegistering
+                            ? _handleRegister
+                            : _handleLogin,
+                        child: Text(isRegistering ? "Register" : "Login"),
+                      ),
+                      CheckboxListTile(
+                        title: const Text("Remember me"),
+                        value: _rememberMe,
+                        onChanged: (val) =>
+                            setState(() => _rememberMe = val ?? false),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => isRegistering = !isRegistering);
+                        },
+                        child: Text(
+                          isRegistering
+                              ? "Already have an account? Login"
+                              : "Don't have an account? Register",
+                        ),
+                      ),
+                    ],
                   ),
-                  CheckboxListTile(
-                    title: const Text("Remember me"),
-                    value: _rememberMe,
-                    onChanged: (val) {
-                      setState(() => _rememberMe = val ?? false);
-                    },
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        isRegistering = !isRegistering;
-                      });
-                    },
-                    child: Text(
-                      isRegistering
-                          ? "Already have an account? Login"
-                          : "Don't have an account? Register",
-                    ),
-                  ),
-                ],
-              ),
           ],
         ),
       ),

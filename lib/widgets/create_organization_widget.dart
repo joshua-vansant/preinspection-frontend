@@ -4,7 +4,6 @@ import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 import 'package:frontend/utils/ui_helpers.dart';
 
-
 class CreateOrganizationWidget extends StatefulWidget {
   final void Function(Map<String, dynamic> organization)? onCreated;
 
@@ -38,7 +37,10 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
     final name = _nameController.text.trim();
     if (name.length < 3) {
       if (!mounted) return;
-      UIHelpers.showError(context, "Organization name must be at least 3 characters");
+      UIHelpers.showError(
+        context,
+        "Organization name must be at least 3 characters",
+      );
       return;
     }
 
@@ -46,11 +48,7 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
 
     try {
       final org = await OrganizationService.createOrg(token, name);
-
-      // Update provider
       authProvider.setOrg(org['organization']);
-
-      // Callback for dashboard refresh
       if (widget.onCreated != null) widget.onCreated!(org['organization']);
     } catch (e) {
       if (!mounted) return;

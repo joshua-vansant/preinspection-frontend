@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AddVehicleScreen extends StatefulWidget {
-  final Map<String, dynamic>? existingVehicle; // optional for editing
+  final Map<String, dynamic>? existingVehicle;
 
   const AddVehicleScreen({super.key, this.existingVehicle});
 

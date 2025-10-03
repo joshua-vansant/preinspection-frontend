@@ -3,34 +3,33 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
 class VehicleService {
-/// Fetch the last inspection for a given vehicle
-static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
-  String token,
-  int vehicleId,
-) async {
-  final Uri url = Uri.parse('${ApiConfig.baseUrl}/inspections/last/$vehicleId');
-
-  final response = await http.get(
-    url,
-    headers: ApiConfig.headers(token: token),
-  );
-
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = jsonDecode(response.body);
-    return data;
-  } else if (response.statusCode == 404) {
-    // No inspections for this vehicle
-    return null;
-  } else {
-    throw Exception(
-      'Failed to fetch last inspection for vehicle $vehicleId: '
-      '${response.statusCode} ${response.body}',
+  static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
+    String token,
+    int vehicleId,
+  ) async {
+    final Uri url = Uri.parse(
+      '${ApiConfig.baseUrl}/inspections/last/$vehicleId',
     );
+
+    final response = await http.get(
+      url,
+      headers: ApiConfig.headers(token: token),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data;
+    } else if (response.statusCode == 404) {
+      // No inspections for this vehicle
+      return null;
+    } else {
+      throw Exception(
+        'Failed to fetch last inspection for vehicle $vehicleId: '
+        '${response.statusCode} ${response.body}',
+      );
+    }
   }
-}
 
-
-  /// Fetch all vehicles the user can access (org or created)
   static Future<List<Map<String, dynamic>>> getVehicles(String token) async {
     final Uri url = Uri.parse('${ApiConfig.baseUrl}/vehicles/');
 
@@ -45,7 +44,6 @@ static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
           .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
           .toList();
     } else if (response.statusCode == 400) {
-      // Backend could return 400 if admin has no org
       throw Exception('Failed to fetch vehicles: ${response.body}');
     } else {
       throw Exception(
@@ -54,7 +52,6 @@ static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
     }
   }
 
-  /// Fetch a single vehicle by ID
   static Future<Map<String, dynamic>> getVehicleById(
     String token,
     int vehicleId,
@@ -75,7 +72,6 @@ static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
     }
   }
 
-  /// Add a new vehicle
   static Future<Map<String, dynamic>> addVehicle({
     required String token,
     required String licensePlate,
@@ -118,7 +114,6 @@ static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
     }
   }
 
-  /// Update a vehicle (admin-only)
   static Future<Map<String, dynamic>> updateVehicle({
     required String token,
     required int vehicleId,
@@ -162,7 +157,6 @@ static Future<Map<String, dynamic>?> getLastInspectionForVehicle(
     }
   }
 
-  /// Delete a vehicle (admin-only)
   static Future<void> deleteVehicle(String token, int vehicleId) async {
     final Uri url = Uri.parse('${ApiConfig.baseUrl}/vehicles/$vehicleId');
 

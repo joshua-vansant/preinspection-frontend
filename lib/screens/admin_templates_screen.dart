@@ -26,12 +26,12 @@ class _AdminTemplatesScreenState extends State<AdminTemplatesScreen> {
       final result = await TemplateService.getTemplates(token);
       setState(() => templates = result);
     } catch (e) {
-        if (!mounted) return;
-        UIHelpers.showError(context, e.toString());
-      } finally {
-            if (mounted) setState(() => loading = false);
-          }
+      if (!mounted) return;
+      UIHelpers.showError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
+  }
 
   @override
   void initState() {

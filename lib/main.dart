@@ -1,102 +1,43 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'providers/auth_provider.dart';
-import 'providers/vehicle_provider.dart';
-import 'providers/inspection_history_provider.dart';
-import 'providers/socket_provider.dart';
-import 'widgets/app_lifecycle_handler.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
-import 'providers/inspection_provider.dart';
-import 'package:flutter/rendering.dart';
+import 'package:frontend/providers/socket_provider.dart';
+import 'package:frontend/providers/inspection_history_provider.dart';
+import 'package:frontend/providers/vehicle_provider.dart';
+import 'package:frontend/providers/inspection_provider.dart';
 
-void main() async {
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-  };
-
-  runZonedGuarded(() {
-    debugPaintSizeEnabled = false;
-    runApp(const MyApp());
-  }, (error, stack) {
-    print('Caught by runZonedGuarded: $error\n$stack');
-  });
-
-  SentryWidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Sentry
-  await SentryFlutter.init(
-    (options) {
-      options.dsn =
-          'https://6e997a495ed33316994592e01cce24f3@o4510095188688896.ingest.us.sentry.io/4510095241510912';
-      options.tracesSampleRate = 1.0;
-    },
-    appRunner: () {
-      runApp(
-   MultiProvider(
-  providers: [
-    ChangeNotifierProvider(create: (_) => AuthProvider()),
-
-    // VehicleProvider must be above anything that reads it
-    ChangeNotifierProvider(create: (_) => VehicleProvider()),
-
-    ChangeNotifierProxyProvider<AuthProvider, SocketProvider>(
-      create: (context) =>
-          SocketProvider(authProvider: context.read<AuthProvider>()),
-      update: (context, authProvider, socketProvider) {
-        socketProvider ??=
-            SocketProvider(authProvider: authProvider);
-
-        authProvider.addListener(() {
-          if(!context.mounted) return;
-          socketProvider?.reconnectIfNeeded();
-
-          final vehicleProvider = context.read<VehicleProvider>();
-          if (authProvider.token != null && authProvider.org != null) {
-            vehicleProvider.fetchVehicles(authProvider.token!);
-          }
-        });
-
-        return socketProvider;
-      },
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (context) => SocketProvider(authProvider: context.read<AuthProvider>())),
+        ChangeNotifierProvider(create: (context) => InspectionHistoryProvider(
+          authProvider: context.read<AuthProvider>(),
+          socketProvider: context.read<SocketProvider>())),
+        ChangeNotifierProvider(create: (context) => VehicleProvider()),
+        ChangeNotifierProvider(create: (context) => InspectionProvider(authProvider: context.read<AuthProvider>()))
+      ],
+      child: const RootApp(),
     ),
-
-    ChangeNotifierProxyProvider<SocketProvider, InspectionHistoryProvider>(
-      create: (context) => InspectionHistoryProvider(
-          socketProvider: context.read<SocketProvider>()),
-      update: (context, socketProvider, inspectionHistoryProvider) {
-        inspectionHistoryProvider ??= InspectionHistoryProvider(
-            socketProvider: socketProvider);
-        return inspectionHistoryProvider;
-      },
-    ),
-
-    ChangeNotifierProvider(create: (_) => InspectionProvider()),
-  ],
-  child: AppLifeCycleHandler(child: const MyApp()),
-)
-      );
-    },
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RootApp extends StatelessWidget {
+  const RootApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return MaterialApp(
       title: 'PreInspection',
       theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login',
-      routes: {
-        '/login': (_) => const LoginScreen(),
-        '/dashboard': (_) => const DashboardScreen(),
-      },
+      home: authProvider.isLoggedIn ? const DashboardScreen() : const LoginScreen(),
     );
   }
 }
+

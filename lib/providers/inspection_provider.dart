@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/inspection_service.dart';
 import '../utils/ui_helpers.dart';
+import 'auth_provider.dart';
 
 class InspectionProvider extends ChangeNotifier {
+  final AuthProvider authProvider;
+
+  InspectionProvider({required this.authProvider});
+
   Map<String, dynamic> _currentInspection = {};
   bool _isSubmitting = false;
   String _error = '';
@@ -11,7 +16,7 @@ class InspectionProvider extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
   String get error => _error;
 
-  /// Initialize a new inspection (PRE or POST)
+  // Initialize a new inspection (PRE or POST)
   void startInspection({
     required int vehicleId,
     required String type,
@@ -34,61 +39,63 @@ class InspectionProvider extends ChangeNotifier {
       'notes': null,
       'template_name': template?['name'] ?? 'Unknown',
       'template_items': template?['items'] ?? [],
-      'org_id': selectedVehicle?['org_id'], // <-- optional
+      'org_id': authProvider.org?['id'] ?? selectedVehicle?['org_id'],
       if (initialData != null) ...initialData,
     };
     _error = '';
     notifyListeners();
   }
 
-
-  /// Update a single field in the current inspection
+  // Update a single field in the current inspection
   void updateField(String key, dynamic value) {
     _currentInspection[key] = value;
     notifyListeners();
   }
 
-  /// Submit a new inspection
-  Future<bool> submitInspection(String token) async {
+
+  Future<bool> _submit(Future<void> Function() action) async {
     _isSubmitting = true;
     _error = '';
     notifyListeners();
 
     try {
-      await InspectionService.submitInspection(token, _currentInspection);
+      await action();
       _isSubmitting = false;
       notifyListeners();
       return true;
     } catch (e) {
       _isSubmitting = false;
       final parsed = UIHelpers.parseError(e.toString());
-      _error = parsed.isNotEmpty ? 'Failed to submit inspection: $parsed' : 'Failed to submit inspection';
+      _error = parsed.isNotEmpty
+          ? 'Failed to submit inspection: $parsed'
+          : 'Failed to submit inspection';
       notifyListeners();
       return false;
     }
   }
 
-  /// Update an existing inspection (if editing)
-  Future<bool> updateInspection(String token, int inspectionId) async {
-    _isSubmitting = true;
-    _error = '';
-    notifyListeners();
-
-    try {
-      await InspectionService.updateInspection(inspectionId, token, _currentInspection);
-      _isSubmitting = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _isSubmitting = false;
-      final parsed = UIHelpers.parseError(e.toString());
-      _error = parsed.isNotEmpty ? 'Failed to submit inspection: $parsed' : 'Failed to submit inspection';
-      notifyListeners();
+  // Submit a new inspection
+  Future<bool> submitInspection() async {
+    final token = authProvider.token;
+    if (token == null) {
+      _error = 'Not authenticated';
       return false;
     }
+    return _submit(() => InspectionService.submitInspection(token, _currentInspection));
   }
 
-  /// Reset the current inspection
+  // Update an existing inspection
+  Future<bool> updateInspection(int inspectionId) async {
+    final token = authProvider.token;
+    if (token == null) {
+      _error = 'Not authenticated';
+      return false;
+    }
+    return _submit(() =>
+        InspectionService.updateInspection(inspectionId, token, _currentInspection));
+  }
+
+  // Reset the current inspection
   void resetInspection() {
     _currentInspection = {};
     _error = '';

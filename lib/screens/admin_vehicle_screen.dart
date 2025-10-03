@@ -33,7 +33,7 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
 
       setState(() => isLoading = false);
     } catch (e) {
-      if(!mounted) return;
+      if (!mounted) return;
       UIHelpers.showError(context, e.toString());
     }
   }

@@ -28,7 +28,7 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
     if (!mounted) return;
     setState(() {
       _loading = true;
-      _copied = false; // reset copied state when fetching new code
+      _copied = false;
     });
 
     try {
@@ -82,7 +82,10 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
             if (_inviteCode != null) ...[
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _copied ? Colors.green[300] : Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),

@@ -32,7 +32,9 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inspection #${inspection['id']} (${inspection['type'] ?? "N/A"})'),
+        title: Text(
+          'Inspection #${inspection['id']} (${inspection['type'] ?? "N/A"})',
+        ),
         actions: [
           if (editable)
             IconButton(
@@ -44,21 +46,27 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
                 );
 
                 try {
-                  final fullInspection = await InspectionService.getInspectionById(
-                    inspection['id'],
-                    token,
-                  );
+                  final fullInspection =
+                      await InspectionService.getInspectionById(
+                        inspection['id'],
+                        token,
+                      );
                   if (!mounted) return;
                   Navigator.pop(context);
 
-                  final template = fullInspection['template'] as Map<String, dynamic>?;
+                  final template =
+                      fullInspection['template'] as Map<String, dynamic>?;
 
                   if (template == null || template.isEmpty) {
-                    UIHelpers.showError(context, 'Template data is missing. Cannot edit.');
+                    UIHelpers.showError(
+                      context,
+                      'Template data is missing. Cannot edit.',
+                    );
                     return;
                   }
 
@@ -86,8 +94,14 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _infoRow('Vehicle ID', inspection['vehicle_id']?.toString() ?? "N/A"),
-            _infoRow('Template ID', inspection['template_id']?.toString() ?? "N/A"),
+            _infoRow(
+              'Vehicle ID',
+              inspection['vehicle_id']?.toString() ?? "N/A",
+            ),
+            _infoRow(
+              'Template ID',
+              inspection['template_id']?.toString() ?? "N/A",
+            ),
             _infoRow('Date', formattedDate),
             const SizedBox(height: 16),
             Card(
@@ -95,8 +109,13 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
               elevation: 2,
               child: ListTile(
                 leading: const Icon(Icons.speed, color: Colors.blue),
-                title: const Text('Start Mileage', style: TextStyle(fontWeight: FontWeight.bold)),
-                trailing: Text(inspection['start_mileage']?.toString() ?? "N/A"),
+                title: const Text(
+                  'Start Mileage',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                trailing: Text(
+                  inspection['start_mileage']?.toString() ?? "N/A",
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -104,19 +123,32 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
               color: Colors.green.shade50,
               elevation: 2,
               child: ListTile(
-                leading: const Icon(Icons.local_gas_station, color: Colors.green),
-                title: const Text('Fuel Level', style: TextStyle(fontWeight: FontWeight.bold)),
+                leading: const Icon(
+                  Icons.local_gas_station,
+                  color: Colors.green,
+                ),
+                title: const Text(
+                  'Fuel Level',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 trailing: Text('${(inspection['fuel_level'] ?? 0).round()}%'),
               ),
             ),
-            if (inspection['fuel_notes'] != null && (inspection['fuel_notes'] as String).isNotEmpty) ...[
+            if (inspection['fuel_notes'] != null &&
+                (inspection['fuel_notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 8),
               Text('Fuel Notes: ${inspection['fuel_notes']}'),
             ],
             const SizedBox(height: 8),
-            _infoRow('Odometer Verified', inspection['odometer_verified']?.toString() ?? "false"),
+            _infoRow(
+              'Odometer Verified',
+              inspection['odometer_verified']?.toString() ?? "false",
+            ),
             const SizedBox(height: 16),
-            const Text('Results:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Results:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 4),
             Expanded(
               child: ListView(
@@ -133,9 +165,13 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                 }).toList(),
               ),
             ),
-            if (inspection['notes'] != null && (inspection['notes'] as String).isNotEmpty) ...[
+            if (inspection['notes'] != null &&
+                (inspection['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'Notes:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               Text(inspection['notes']),
             ],
           ],

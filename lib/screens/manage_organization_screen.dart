@@ -72,7 +72,7 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
       }
     } catch (e) {
       if (!context.mounted) return;
-        UIHelpers.showError(context, "Error updating organization: $e");
+      UIHelpers.showError(context, "Error updating organization: $e");
     } finally {
       setState(() => _isLoading = false);
     }
@@ -162,9 +162,7 @@ class _ManageOrganizationScreenState extends State<ManageOrganizationScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  backgroundColor: Colors
-                                      .blue
-                                      .shade600, // gradient alternative
+                                  backgroundColor: Colors.blue.shade600,
                                   textStyle: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

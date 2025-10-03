@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/inspection_service.dart';
-import 'socket_provider.dart';
 import '../utils/ui_helpers.dart';
+import 'auth_provider.dart';
+import 'socket_provider.dart';
 
 class InspectionHistoryProvider extends ChangeNotifier {
+  final AuthProvider authProvider;
   final SocketProvider socketProvider;
 
   List<Map<String, dynamic>> _history = [];
@@ -14,12 +16,22 @@ class InspectionHistoryProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get error => _error;
 
-  InspectionHistoryProvider({required this.socketProvider}) {
+  InspectionHistoryProvider({
+    required this.authProvider,
+    required this.socketProvider,
+  }) {
     _listenForSocketUpdates();
   }
 
-  /// Fetches the inspection history for the current user
-  Future<void> fetchHistory(String token) async {
+  // Fetch inspection history for the logged-in user
+  Future<void> fetchHistory() async {
+    final token = authProvider.token;
+    if (token == null) {
+      _error = 'Not authenticated';
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     _error = '';
     notifyListeners();
@@ -27,10 +39,11 @@ class InspectionHistoryProvider extends ChangeNotifier {
     try {
       _history = await InspectionService.getInspectionHistory(token);
 
+      // Sort newest first
       _history.sort((a, b) {
         final aDate = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
         final bDate = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
-        return bDate.compareTo(aDate); // newest first
+        return bDate.compareTo(aDate);
       });
     } catch (e) {
       _history = [];
@@ -42,14 +55,14 @@ class InspectionHistoryProvider extends ChangeNotifier {
     }
   }
 
-  /// Clears the cached history
+  // Clears cached history
   void clearHistory() {
     _history = [];
     _error = '';
     notifyListeners();
   }
 
-  /// Adds or updates an inspection in the list
+  // Adds or updates an inspection in the list
   void addInspection(Map<String, dynamic> inspection) {
     final existingIndex =
         _history.indexWhere((i) => i['id'] == inspection['id']);
@@ -61,21 +74,20 @@ class InspectionHistoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Refresh by clearing and fetching fresh data
-  Future<void> refresh(String token) async {
+  // Refresh by clearing + fetching
+  Future<void> refresh() async {
     clearHistory();
-    await fetchHistory(token);
+    await fetchHistory();
   }
 
   void _listenForSocketUpdates() {
     socketProvider.onEvent('inspection_update', (data) {
       debugPrint("🔔 Socket inspection update: $data");
-      if (data is Map<String, dynamic>) { 
+      if (data is Map<String, dynamic>) {
         addInspection(data);
       }
     });
   }
-
 
   @override
   void dispose() {

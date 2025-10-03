@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 
 class AppLifeCycleHandler extends StatefulWidget {
   final Widget child;
@@ -28,12 +26,6 @@ class _AppLifeCycleHandlerState extends State<AppLifeCycleHandler>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
-    final authProvider = context.read<AuthProvider>();
-
-    if (state == AppLifecycleState.resumed) {
-      debugPrint("App resumed, checking token...");
-      await authProvider.refreshTokenIfNeeded();
-    }
   }
 
   @override

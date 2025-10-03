@@ -33,7 +33,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
   void initState() {
     super.initState();
 
-    // Initialize controllers
     notesController.text = widget.inspection['notes'] ?? '';
     fuelNotesController.text = widget.inspection['fuel_notes'] ?? '';
     startMileageController = TextEditingController(
@@ -45,7 +44,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
       final isEdit = widget.editMode && widget.inspection.containsKey('id');
 
       if (isEdit) {
-        // Editing existing inspection
         inspectionProvider.startInspection(
           vehicleId: widget.inspection['vehicle_id'],
           type: widget.inspection['type'] ?? 'pre-trip',
@@ -53,47 +51,42 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
           template: widget.inspection['template'],
         );
       } else {
-        // New inspection
         inspectionProvider.startInspection(
           vehicleId: widget.vehicleId!,
           type: widget.inspectionType ?? 'pre-trip',
           template: widget.inspection,
         );
       }
-
-      // Sync controllers with currentInspection
       final current = inspectionProvider.currentInspection;
       startMileageController.text = current['start_mileage']?.toString() ?? '';
     });
   }
 
-
-  /// Submit inspection with validation
   Future<void> _submitInspection() async {
     final token = context.read<AuthProvider>().token;
     if (token == null) return;
 
     final inspectionProvider = context.read<InspectionProvider>();
-
-    // Validate required mileage
     final startMileage = int.tryParse(startMileageController.text);
 
     inspectionProvider.updateField('start_mileage', startMileage);
     inspectionProvider.updateField('notes', notesController.text.trim());
-    inspectionProvider.updateField('fuel_notes', fuelNotesController.text.trim(),
+    inspectionProvider.updateField(
+      'fuel_notes',
+      fuelNotesController.text.trim(),
     );
 
     final success = widget.editMode && widget.inspection.containsKey('id')
-        ? await inspectionProvider.updateInspection(
-            token,
-            widget.inspection['id'],
-          )
-        : await inspectionProvider.submitInspection(token);
+        ? await inspectionProvider.updateInspection(widget.inspection['id'])
+        : await inspectionProvider.submitInspection();
 
     if (!mounted) return;
 
     if (success) {
-      UIHelpers.showSuccess(context, widget.editMode ? "Inspection updated" : "Inspection submitted");
+      UIHelpers.showSuccess(
+        context,
+        widget.editMode ? "Inspection updated" : "Inspection submitted",
+      );
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),

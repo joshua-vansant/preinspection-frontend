@@ -11,11 +11,10 @@ class SocketProvider extends ChangeNotifier {
   IO.Socket? _socket;
 
   final Map<String, List<SocketCallback>> _listeners = {};
-  BuildContext? _context; // optional: set context to show errors
+  BuildContext? _context;
 
   SocketProvider({required this.authProvider});
 
-  /// Optional: provide a context so we can show user-friendly messages
   void setContext(BuildContext context) {
     _context = context;
   }
@@ -23,25 +22,17 @@ class SocketProvider extends ChangeNotifier {
   Future<void> _initSocket() async {
     if (_socket != null) return;
 
-    final orgId = authProvider.org?['id'];
-    if (orgId == null) {
-      try {
-        await authProvider.loadOrg();
-      } catch (e) {
-        debugPrint("SocketProvider: Failed to load org: $e");
-        if (_context != null) UIHelpers.showError(_context!, e.toString());
-        return;
-      }
+    final token = authProvider.token;
+    if (token == null) {
+      debugPrint("SocketProvider: No auth token, cannot init socket");
+      _showError("Not authenticated: cannot connect to socket.");
+      return;
     }
 
-    final finalOrgId = authProvider.org?['id'];
-    if (finalOrgId == null) {
-      debugPrint("SocketProvider: No org ID, cannot initialize socket.");
-      if (_context != null)
-        UIHelpers.showError(
-          _context!,
-          "Unable to connect: no organization found",
-        );
+    final orgId = authProvider.org?['id'];
+    if (authProvider.isAdmin && orgId == null) {
+      debugPrint("SocketProvider: Admin missing org ID, cannot init socket");
+      _showError("No organization found for admin.");
       return;
     }
 
@@ -58,13 +49,18 @@ class SocketProvider extends ChangeNotifier {
     );
 
     _socket!.onConnect((_) {
-      debugPrint("SocketProvider: ✅ Connected to backend socket");
-      _socket!.emit('join_org', {'org_id': finalOrgId});
+      debugPrint("SocketProvider: Connected to backend socket");
+
+      if (orgId != null) {
+        _socket!.emit('join_org', {'org_id': orgId});
+      } else {
+        _socket!.emit('join_user', {'user_id': authProvider.user?['id']});
+      }
     });
 
-    _socket!.onDisconnect((_) {});
-    _socket!.onConnectError((err) {});
-    _socket!.onError((err) {});
+    _socket!.onDisconnect((_) => debugPrint("SocketProvider: Disconnected"));
+    _socket!.onConnectError((err) => _showError("Socket connect error: $err"));
+    _socket!.onError((err) => _showError("Socket error: $err"));
 
     _socket!.onAny((event, data) {
       if (_listeners.containsKey(event)) {
@@ -92,15 +88,10 @@ class SocketProvider extends ChangeNotifier {
     }
   }
 
-  void reconnectIfNeeded() async {
+  Future<void> reconnectIfNeeded() async {
     if (_socket == null || !_socket!.connected) {
-      _socket?.disconnect();
-      _socket = null;
-      _listeners.clear();
+      disconnect();
       await _initSocket();
-    }
-    if (_socket == null || !_socket!.connected) {
-      _initSocket();
     }
   }
 
@@ -108,5 +99,12 @@ class SocketProvider extends ChangeNotifier {
     _socket?.disconnect();
     _socket = null;
     _listeners.clear();
+  }
+
+  void _showError(String message) {
+    debugPrint("SocketProvider: $message");
+    if (_context != null) {
+      UIHelpers.showError(_context!, message);
+    }
   }
 }

@@ -31,10 +31,9 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
           debugPrint(
             "AdminInspectionsScreen: Fetching initial inspection history...",
           );
-          inspectionProvider.fetchHistory(token);
+          inspectionProvider.fetchHistory();
         }
 
-        // Subscribe to new inspection events
         _socketProvider.onEvent('inspection_created', (data) {
           debugPrint("AdminInspectionsScreen: SOCKET RAW DATA: $data");
 
@@ -58,35 +57,35 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
 
   @override
   void dispose() {
-    // use cached provider instead of context.read
     _socketProvider.offEvent('inspection_created');
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final inspectionProvider = context.watch<InspectionHistoryProvider>();
+    final inspectionHistoryProvider = context
+        .watch<InspectionHistoryProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text("Inspection History")),
-      body: inspectionProvider.isLoading
+      body: inspectionHistoryProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : inspectionProvider.error.isNotEmpty
-          ? Center(child: Text(inspectionProvider.error))
-          : inspectionProvider.history.isEmpty
+          : inspectionHistoryProvider.error.isNotEmpty
+          ? Center(child: Text(inspectionHistoryProvider.error))
+          : inspectionHistoryProvider.history.isEmpty
           ? const Center(child: Text("No inspections found"))
           : RefreshIndicator(
               onRefresh: () async {
                 final token = context.read<AuthProvider>().token;
                 if (token != null) {
-                  await inspectionProvider.fetchHistory(token);
+                  await inspectionHistoryProvider.fetchHistory();
                 }
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(12),
-                itemCount: inspectionProvider.history.length,
+                itemCount: inspectionHistoryProvider.history.length,
                 itemBuilder: (context, index) {
-                  final inspection = inspectionProvider.history[index];
+                  final inspection = inspectionHistoryProvider.history[index];
                   final formattedDate = parseUtcToLocal(
                     inspection['created_at'],
                   );
@@ -154,7 +153,6 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
                               ...inspection['results'].entries.map((entry) {
                                 final itemId = entry.key;
                                 final answer = entry.value ?? 'N/A';
-                                // Optionally map itemId -> question if you have template_items
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 2,

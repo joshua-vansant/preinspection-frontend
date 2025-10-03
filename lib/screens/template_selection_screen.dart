@@ -52,13 +52,22 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-          UIHelpers.showError(context, "Failed to load templates: $e");
-          setState(() => isLoading = false);
+      UIHelpers.showError(context, "Failed to load templates: $e");
+      setState(() => isLoading = false);
     }
   }
 
   Future<void> selectTemplate(Map<String, dynamic> template) async {
-    final merged = Map<String, dynamic>.from(template);
+    final merged = {
+      "id": template['id'] ?? 0,
+      "name": template['name'] ?? 'Default Template',
+      "items": template['items'] ?? [],
+      "org_id": template['org_id'],
+      "is_default": template['is_default'] ?? false,
+      "version": template['version'] ?? 1,
+      "description": template['description'] ?? '',
+      "template_items": template['items'] ?? [],
+    };
 
     final result = await Navigator.push(
       context,
@@ -125,7 +134,6 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
               ),
             ),
           ),
-
           // Template list
           Expanded(
             child: ListView.builder(

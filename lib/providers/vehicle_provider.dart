@@ -9,31 +9,31 @@ class VehicleProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get vehicles => _vehicles;
   Map<String, dynamic>? get selectedVehicle => _selectedVehicle;
 
-  /// Replace the current vehicle list
+  // Replace the current vehicle list
   void setVehicles(List<Map<String, dynamic>> vehicles) {
     _vehicles = vehicles;
     notifyListeners();
   }
 
-  /// Select a vehicle
+  // Select a vehicle
   void selectVehicle(Map<String, dynamic> vehicle) {
     _selectedVehicle = vehicle;
     notifyListeners();
   }
 
-  /// Clear all vehicles
+  // Clear all vehicles
   void clearVehicles() {
     _vehicles = [];
     _selectedVehicle = null;
     notifyListeners();
   }
 
-  //// Fetch vehicles from the backend and update provider
+  // Fetch vehicles from the backend and update provider
 Future<void> fetchVehicles(String token, {BuildContext? context}) async {
   try {
     final result = await VehicleService.getVehicles(token);
 
-    // Fetch last inspection for each vehicle in parallel
+    // Fetch last inspection for each vehicle
     final List<Map<String, dynamic>> vehiclesWithInspections = await Future.wait(
       result.map((vehicle) async {
         try {
@@ -61,7 +61,7 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
   }
 }
 
-  /// Add a new vehicle
+  // Add a new vehicle
   Future<void> addVehicle(
     String token, {
     required String licensePlate,
@@ -97,7 +97,7 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     }
   }
 
-  /// Update an existing vehicle
+  // Update an existing vehicle
   Future<void> updateVehicle(
     String token,
     int vehicleId,
@@ -128,7 +128,7 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     }
   }
 
-  /// Delete a vehicle
+  // Delete a vehicle
   Future<void> deleteVehicle(String token, int vehicleId, {BuildContext? context}) async {
     try {
       await VehicleService.deleteVehicle(token, vehicleId);
@@ -142,6 +142,7 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     }
   }
 
+  // Returns all vehicles within the org
   List<Map<String, dynamic>> vehiclesForOrg(int orgId) {
     return _vehicles.where((v) => v['org_id'] == orgId).toList();
   }

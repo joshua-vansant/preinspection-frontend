@@ -37,8 +37,6 @@ class _RedeemAdminInviteWidgetState extends State<RedeemAdminInviteWidget> {
 
     try {
       final result = await OrganizationService.redeemAdminInvite(token, code);
-
-      // Update user in AuthProvider with new role
       WidgetsBinding.instance.addPostFrameCallback((_) {
         authProvider.setUser({
           ...?authProvider.user,
@@ -46,15 +44,11 @@ class _RedeemAdminInviteWidgetState extends State<RedeemAdminInviteWidget> {
           'org_id': result['org_id'],
         });
       });
-      // Optional: reload organization data if needed
-      await authProvider.loadOrg();
+      await authProvider.org;
 
       setState(() {
         _message = "Success! You are now an admin.";
       });
-
-      // No navigation needed — dashboard and drawer will rebuild automatically
-
     } catch (e) {
       setState(() {
         _message = "Invalid code. Please try again.";

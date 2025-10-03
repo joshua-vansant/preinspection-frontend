@@ -87,113 +87,113 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text("Create Template"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: creating ? null : _createTemplate,
-          ),
-        ],
-      ),
-      body: creating
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: "Template Name",
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SwitchListTile(
-                    value: isDefault,
-                    title: const Text("Default Template"),
-                    onChanged: (val) => setState(() => isDefault = val),
-                  ),
-                  const Divider(),
-                  ...itemsControllers.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final controllers = entry.value;
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextField(
-                              controller: controllers["name"],
-                              decoration: InputDecoration(
-                                labelText: "Item ${index + 1} Name",
-                                border: const OutlineInputBorder(),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: controllers["question"],
-                              decoration: InputDecoration(
-                                labelText: "Item ${index + 1} Question",
-                                border: const OutlineInputBorder(),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () => _removeItem(index),
-                              ),
-                            ),
-                          ],
+        appBar: AppBar(
+          title: const Text("Create Template"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: creating ? null : _createTemplate,
+            ),
+          ],
+        ),
+        body: creating
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: "Template Name",
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
                       ),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: _addItem,
-                    icon: const Icon(Icons.add),
-                    label: const Text("Add Item"),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: creating ? null : _createTemplate,
-                    icon: const Icon(Icons.save),
-                    label: const Text("Create Template"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      value: isDefault,
+                      title: const Text("Default Template"),
+                      onChanged: (val) => setState(() => isDefault = val),
+                    ),
+                    const Divider(),
+                    ...itemsControllers.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final controllers = entry.value;
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextField(
+                                controller: controllers["name"],
+                                decoration: InputDecoration(
+                                  labelText: "Item ${index + 1} Name",
+                                  border: const OutlineInputBorder(),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: controllers["question"],
+                                decoration: InputDecoration(
+                                  labelText: "Item ${index + 1} Question",
+                                  border: const OutlineInputBorder(),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _removeItem(index),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _addItem,
+                      icon: const Icon(Icons.add),
+                      label: const Text("Add Item"),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: creating ? null : _createTemplate,
+                      icon: const Icon(Icons.save),
+                      label: const Text("Create Template"),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-    ),
+      ),
     );
   }
 }
