@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
@@ -174,8 +175,13 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
                   try {
                     await OrganizationService.deleteOrg(token);
                     authProvider.clearOrg();
+                    authProvider.setRole("driver");
                     if (!context.mounted) return;
                     Navigator.pop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DashboardScreen())
+                    );
                     UIHelpers.showSuccess(
                       context,
                       "Organization deleted successfully!",

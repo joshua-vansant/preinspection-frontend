@@ -33,10 +33,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loadLastEmail() async {
     final prefs = await SharedPreferences.getInstance();
     final lastEmail = prefs.getString('last_email');
+    final remember = prefs.getBool('remember_me') ?? false;
+
     if (lastEmail != null) {
       emailController.text = lastEmail;
-      _rememberMe = true;
     }
+
+    setState(() {
+        _rememberMe = remember;
+    });
   }
 
   Future<void> _handleLogin() async {
@@ -58,8 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         if (_rememberMe) {
           await prefs.setString('last_email', emailController.text.trim());
+          await prefs.setBool('remember_me', true);
         } else {
           await prefs.remove('last_email');
+          await prefs.setBool('remember_me', false);
         }
 
         if (!mounted) return;

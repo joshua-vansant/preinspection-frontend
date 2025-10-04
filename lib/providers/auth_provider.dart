@@ -31,11 +31,22 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setRole(String role) {
+  _role = role;
+  if (_user != null) {
+    _user!['role'] = role;
+  }
+  notifyListeners();
+}
+
+
  void clearOrg() {
     _org = null;
     if (_user != null) {
       _role = 'driver';
       _user!['role'] = 'driver';
+      _user!['org_id'] = null;
+      _user!['org'] = null;
     }
     notifyListeners();
   }
