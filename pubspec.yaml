@@ -45,10 +45,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/inspection_app_logo_512x512.png"
+  image_path: "lib/assets/icon/app_icon.png"
 
 
   # The "flutter_lints" package below contains a set of recommended lints to
