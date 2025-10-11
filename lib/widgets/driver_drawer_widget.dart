@@ -67,6 +67,62 @@ class DriverDrawerWidget extends StatelessWidget {
                         },
                       ),
                     ),
+                  ] else ...[
+                    ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.orange),
+                      title: const Text("Leave Organization"),
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text("Leave Organization?"),
+                            content: const Text(
+                              "Are you sure you want to leave this organization?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  "Leave",
+                                  style: TextStyle(color: Colors.orange),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm != true) return;
+
+                        final token = authProvider.token;
+                        if (token == null) {
+                          UIHelpers.showError(context, "Not authenticated");
+                          return;
+                        }
+
+                        try {
+                          await OrganizationService.leaveOrg(token);
+                          authProvider.clearOrg(); // ✅ Clears org info locally
+                          if (!context.mounted) return;
+                          UIHelpers.showSuccess(
+                            context,
+                            "You left the organization.",
+                          );
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DashboardScreen(),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          UIHelpers.showError(context, "Error: $e");
+                        }
+                      },
+                    ),
                   ],
                 ],
               ),
