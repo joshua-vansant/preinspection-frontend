@@ -149,4 +149,29 @@ class InspectionService {
 
     debugPrint("Inspection deleted successfully");
   }
+
+
+  static Future<Map<String, dynamic>> startInspection({
+    required String token,
+    required int vehicleId,
+    required String type,
+    int? orgId,
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/start');
+    final response = await http.post(
+      url,
+      headers: ApiConfig.headers(token: token),
+      body: jsonEncode({
+        'vehicle_id': vehicleId,
+        'type': type,
+        'org_id': orgId,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to start inspection: ${response.body}');
+    }
+  }
 }

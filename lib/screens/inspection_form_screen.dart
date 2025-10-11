@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/inspection_provider.dart';
 import 'dashboard_screen.dart';
-import 'package:frontend/services/inspection_service.dart';
+import 'package:frontend/services/inspection_photo_service.dart';
 import '../utils/ui_helpers.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class InspectionFormScreen extends StatefulWidget {
   final Map<String, dynamic> inspection;
@@ -28,6 +30,28 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
   final TextEditingController notesController = TextEditingController();
   final TextEditingController fuelNotesController = TextEditingController();
   late TextEditingController startMileageController;
+  List<Map<String, dynamic>> _uploadedPhotos = [];
+
+  Future<void> _pickAndUploadPhoto() async {
+    final inspectionProvider = context.read<InspectionProvider>();
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) return;
+
+    try {
+      await inspectionProvider.uploadPhoto(File(pickedFile.path));
+
+      setState(() {
+        _uploadedPhotos = List.from(inspectionProvider.inspectionPhotos);
+      });
+
+      UIHelpers.showSuccess(context, "Photo uploaded successfully");
+    } catch (e) {
+      UIHelpers.showError(context, "Failed to upload photo: ${e.toString()}");
+    }
+  }
 
   @override
   void initState() {
@@ -214,6 +238,39 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                     labelText: "Fuel Notes",
                     border: OutlineInputBorder(),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Photos",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ..._uploadedPhotos.map((photo) {
+                      return Image.network(
+                        photo['photo_url'] ?? photo['url'],
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      );
+                    }).toList(),
+                    GestureDetector(
+                      onTap: _pickAndUploadPhoto,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.add_a_photo,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

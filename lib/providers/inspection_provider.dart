@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/inspection_service.dart';
+import '../services/inspection_photo_service.dart';
 import '../utils/ui_helpers.dart';
 import 'auth_provider.dart';
 
@@ -9,10 +11,14 @@ class InspectionProvider extends ChangeNotifier {
   InspectionProvider({required this.authProvider});
 
   Map<String, dynamic> _currentInspection = {};
+  List<Map<String, dynamic>> _inspectionPhotos = [];
   bool _isSubmitting = false;
   String _error = '';
+  int? _inspectionId;
+  int? get inspectionId => _inspectionId;
 
   Map<String, dynamic> get currentInspection => _currentInspection;
+  List<Map<String, dynamic>> get inspectionPhotos => _inspectionPhotos;
   bool get isSubmitting => _isSubmitting;
   String get error => _error;
 
@@ -51,7 +57,6 @@ class InspectionProvider extends ChangeNotifier {
     _currentInspection[key] = value;
     notifyListeners();
   }
-
 
   Future<bool> _submit(Future<void> Function() action) async {
     _isSubmitting = true;
@@ -95,11 +100,46 @@ class InspectionProvider extends ChangeNotifier {
         InspectionService.updateInspection(inspectionId, token, _currentInspection));
   }
 
+  // Upload a photo (works with or without inspection ID)
+  Future<void> uploadPhoto(File photoFile) async {
+    final token = authProvider.token;
+    if (token == null) {
+      _error = 'Not authenticated';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final response = await InspectionPhotoService.uploadPhoto(
+        inspectionId: _inspectionId, // may be null for drafts
+        token: token,
+        photoFile: photoFile,
+      );
+
+      final photoUrl = response['photo_url'];
+      if (photoUrl != null) {
+        _inspectionPhotos.add({'url': photoUrl});
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Failed to upload photo: ${UIHelpers.parseError(e.toString())}';
+      notifyListeners();
+    }
+  }
+
+  // Add a photo to the current inspection manually
+  void addPhoto(Map<String, dynamic> photo) {
+    _inspectionPhotos.add(photo);
+    notifyListeners();
+  }
+
   // Reset the current inspection
   void resetInspection() {
     _currentInspection = {};
+    _inspectionPhotos = [];
     _error = '';
     _isSubmitting = false;
+    _inspectionId = null;
     notifyListeners();
   }
 }
