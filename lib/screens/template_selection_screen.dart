@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/providers/inspection_provider.dart';
 import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import '../services/template_service.dart';
@@ -58,34 +59,49 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
   }
 
   Future<void> selectTemplate(Map<String, dynamic> template) async {
-    final merged = {
-      "id": template['id'] ?? 0,
-      "name": template['name'] ?? 'Default Template',
-      "items": template['items'] ?? [],
-      "org_id": template['org_id'],
-      "is_default": template['is_default'] ?? false,
-      "version": template['version'] ?? 1,
-      "description": template['description'] ?? '',
-      "template_items": template['items'] ?? [],
-    };
+    final inspectionProvider = context.read<InspectionProvider>();
+    final vehicleId = widget.vehicle['id'];
+    final inspectionType = widget.inspectionType;
 
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => InspectionFormScreen(
-          inspection: merged,
-          vehicleId: widget.vehicle['id'],
-          inspectionType: widget.inspectionType,
-        ),
-      ),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
-    if (!mounted) return;
-    if (result == true) {
-      debugPrint(
-        "Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})",
+    try {
+      // Create the draft inspection here
+      await inspectionProvider.startInspection(
+        vehicleId: vehicleId,
+        templateId: template['id'],
+        type: inspectionType,
+        selectedVehicle: widget.vehicle,
       );
-      Navigator.pop(context, true);
+
+      Navigator.of(context).pop(); // close spinner
+
+      // Now move to form
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InspectionFormScreen(
+            inspection: template,
+            vehicleId: vehicleId,
+            inspectionType: inspectionType,
+          ),
+        ),
+      );
+
+      if (!mounted) return;
+      if (result == true) {
+        debugPrint(
+          "DEBUG: Inspection completed for vehicle ${widget.vehicle['name']} (${widget.vehicle['id']})",
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      Navigator.of(context).pop();
+      UIHelpers.showError(context, "Failed to start inspection: $e");
     }
   }
 

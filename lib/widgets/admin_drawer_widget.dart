@@ -180,7 +180,9 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
                     Navigator.pop(context);
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const DashboardScreen())
+                      MaterialPageRoute(
+                        builder: (_) => const DashboardScreen(),
+                      ),
                     );
                     UIHelpers.showSuccess(
                       context,

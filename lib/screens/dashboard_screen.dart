@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/api_config.dart';
+import 'package:frontend/providers/inspection_history_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/inspection_service.dart';
@@ -48,9 +49,6 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
-  List<Map<String, dynamic>> _history = [];
-  bool _isLoading = true;
-  String? _error;
   IO.Socket? _socket;
 
   @override
@@ -64,48 +62,17 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Future<void> _initializeDashboard() async {
     final auth = context.read<AuthProvider>();
     if (auth.token == null) {
-      setState(() {
-        _isLoading = false;
-        _error = 'Authentication token not available';
-      });
       return;
     }
-    await _fetchHistory(auth);
+    await context.read<InspectionHistoryProvider>().refresh();
     _setupSocket(auth);
-  }
-
-  Future<void> _fetchHistory(AuthProvider auth) async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      final history = await InspectionService.getInspectionHistory(auth.token!);
-      history.sort((a, b) {
-        final aDate = DateTime.tryParse(a['created_at'] ?? '');
-        final bDate = DateTime.tryParse(b['created_at'] ?? '');
-        if (aDate == null && bDate == null) return 0;
-        if (aDate == null) return 1;
-        if (bDate == null) return -1;
-        return bDate.compareTo(aDate);
-      });
-      if (!mounted) return;
-      setState(() {
-        _history = history;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      UIHelpers.showError(context, e.toString());
-      setState(() => _isLoading = false);
-    }
   }
 
   void _setupSocket(AuthProvider auth) {
     final driverId = auth.user?['id'];
     if (driverId == null) return;
 
-    final socketProvider = IO.io(
+    final socket = IO.io(
       ApiConfig.baseUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
@@ -113,24 +80,31 @@ class _DriverDashboardState extends State<DriverDashboard> {
           .build(),
     );
 
-    socketProvider.connect();
-    socketProvider.onConnect(
-      (_) => socketProvider.emit('join_driver', {'id': driverId}),
-    );
-    socketProvider.on('inspection_created', (data) {
+    socket.connect();
+
+    socket.onConnect((_) {
+      debugPrint('DEBUG: Driver socket connected');
+      socket.emit('join_driver', {'id': driverId});
+    });
+
+    socket.on('inspection_created', (data) {
       final inspection = Map<String, dynamic>.from(data);
       if (inspection['driver'] != null &&
           inspection['driver']['id'] == driverId) {
-        if (!mounted) return;
-        setState(() => _history.insert(0, inspection));
+        debugPrint(
+          'DEBUG: Socket inspection_created received: ${inspection['id']}',
+        );
+        final provider = context.read<InspectionHistoryProvider>();
+        provider.addInspection(
+          inspection,
+        ); // 👈 use provider, not local setState
       }
     });
-    socketProvider.onDisconnect(
-      (_) => debugPrint('Driver socket disconnected'),
-    );
-    socketProvider.onError((data) => debugPrint('Driver socket error: $data'));
 
-    _socket = socketProvider;
+    socket.onDisconnect((_) => debugPrint('DEBUG: Driver socket disconnected'));
+    socket.onError((data) => debugPrint('DEBUG: Driver socket error: $data'));
+
+    _socket = socket;
   }
 
   @override
@@ -140,10 +114,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     final org = auth.org;
+    final historyProvider = context.watch<InspectionHistoryProvider>();
 
     return Scaffold(
       drawer: const DriverDrawerWidget(),
@@ -205,20 +181,19 @@ class _DriverDashboardState extends State<DriverDashboard> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _isLoading
+              child: historyProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                  ? Center(child: Text('Error: $_error'))
-                  : _history.isEmpty
+                  : historyProvider.error.isNotEmpty
+                  ? Center(child: Text('Error: ${historyProvider.error}'))
+                  : historyProvider.history.isEmpty
                   ? const Center(child: Text('No inspections yet.'))
                   : RefreshIndicator(
-                      onRefresh: () =>
-                          _fetchHistory(context.read<AuthProvider>()),
+                      onRefresh: historyProvider.refresh,
                       child: ListView.builder(
                         padding: const EdgeInsets.all(12),
-                        itemCount: _history.length,
+                        itemCount: historyProvider.history.length,
                         itemBuilder: (_, index) {
-                          final item = _history[index];
+                          final item = historyProvider.history[index];
                           final formattedDate = parseUtcToLocal(
                             item['created_at'],
                           );
@@ -226,6 +201,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               item['driver']?['full_name'] ?? 'N/A';
                           final inspectionType = (item['type'] ?? 'N/A')
                               .toUpperCase();
+
                           return Card(
                             elevation: 2,
                             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -274,7 +250,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => InspectionDetailScreen(
-                                      inspection: item,
+                                      inspectionId: item['id'],
                                     ),
                                   ),
                                 );
@@ -413,8 +389,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
     });
 
-    socket.onDisconnect((_) => debugPrint('Admin socket disconnected'));
-    socket.onError((data) => debugPrint('Admin socket error: $data'));
+    socket.onDisconnect((_) => debugPrint('DEBUG: Admin socket disconnected'));
+    socket.onError((data) => debugPrint('DEBUG: Admin socket error: $data'));
 
     _socket = socket;
   }

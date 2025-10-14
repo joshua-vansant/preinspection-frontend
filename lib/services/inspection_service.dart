@@ -4,35 +4,21 @@ import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 
 class InspectionService {
-  static Future<void> submitInspection(
+  static Future<Map<String, dynamic>> submitInspection(
     String token,
-    Map<String, dynamic> data,
+    Map<String, dynamic> inspection,
   ) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/inspections/submit');
     final response = await http.post(
-      url,
+      Uri.parse('${ApiConfig.baseUrl}/inspections/submit'),
       headers: ApiConfig.headers(token: token),
-      body: jsonEncode({
-        'template_id': data['template_id'],
-        'vehicle_id': data['vehicle_id'],
-        'type': data['type'],
-        'results': data['results'],
-        'notes': data['notes'],
-        'start_mileage': data['start_mileage'],
-        'fuel_level': data['fuel_level'],
-        'fuel_notes': data['fuel_notes'],
-        'odometer_verified': data['odometer_verified'],
-      }),
+      body: jsonEncode(inspection),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      debugPrint("Failed inspection response body: ${response.body}");
-      throw Exception(
-        'Failed to submit inspection: ${response.statusCode} ${response.body}',
-      );
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to submit inspection: ${response.body}');
     }
-
-    debugPrint("Inspection submitted successfully: ${response.body}");
   }
 
   static Future<Map<String, dynamic>?> getLastInspection(
@@ -89,7 +75,9 @@ class InspectionService {
       url,
       headers: ApiConfig.headers(token: token),
     );
-
+    debugPrint(
+      'DEBUG: Response from inspectionService.getInspectionById ${response}',
+    );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
@@ -130,7 +118,7 @@ class InspectionService {
       );
     }
 
-    debugPrint("Inspection updated successfully: ${response.body}");
+    debugPrint("DEBUG: Inspection updated successfully: ${response.body}");
   }
 
   // Delete an inspection by ID (admin only)
@@ -147,15 +135,15 @@ class InspectionService {
       );
     }
 
-    debugPrint("Inspection deleted successfully");
+    debugPrint("DEBUG: Inspection deleted successfully");
   }
-
 
   static Future<Map<String, dynamic>> startInspection({
     required String token,
     required int vehicleId,
     required String type,
     int? orgId,
+    int? templateId,
   }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/inspections/start');
     final response = await http.post(
@@ -165,10 +153,13 @@ class InspectionService {
         'vehicle_id': vehicleId,
         'type': type,
         'org_id': orgId,
+        if (templateId != null) "template_id": templateId,
       }),
     );
 
-    if (response.statusCode == 201) {
+    print("DEBUG: templateID in service ${templateId}");
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to start inspection: ${response.body}');

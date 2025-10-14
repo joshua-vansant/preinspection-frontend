@@ -12,6 +12,8 @@ class InspectionHistoryProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _error = '';
 
+  final Set<int> _fetchingIds = {};
+
   List<Map<String, dynamic>> get history => _history;
   bool get isLoading => _isLoading;
   String get error => _error;
@@ -41,8 +43,10 @@ class InspectionHistoryProvider extends ChangeNotifier {
 
       // Sort newest first
       _history.sort((a, b) {
-        final aDate = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
-        final bDate = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+        final aDate =
+            DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+        final bDate =
+            DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
         return bDate.compareTo(aDate);
       });
     } catch (e) {
@@ -64,14 +68,36 @@ class InspectionHistoryProvider extends ChangeNotifier {
 
   // Adds or updates an inspection in the list
   void addInspection(Map<String, dynamic> inspection) {
-    final existingIndex =
-        _history.indexWhere((i) => i['id'] == inspection['id']);
-    if (existingIndex == -1) {
+    // Avoid duplicates
+    final exists = _history.any((i) => i['id'] == inspection['id']);
+    if (!exists) {
       _history.insert(0, inspection);
-    } else {
-      _history[existingIndex] = inspection;
+      debugPrint('DEBUG: Inspection added via socket: ${inspection['id']}');
+      notifyListeners();
     }
+  }
+
+  Future<Map<String, dynamic>> fetchFullInspection(int id) async {
+    debugPrint('DEBUG: fetchFullInspection called for $id');
+    final token = authProvider.token;
+    if (token == null) throw Exception('No auth token');
+
+    final fullInspection = await InspectionService.getInspectionById(id, token);
+    debugPrint('DEBUG: Full inspection fetched: $fullInspection');
+
+    // Merge or update history
+    final index = _history.indexWhere((i) => i['id'] == id);
+    if (index >= 0) {
+      _history[index] = fullInspection;
+      debugPrint('DEBUG: Full inspection merged at index $index');
+    } else {
+      _history.insert(0, fullInspection);
+      debugPrint('DEBUG: Full inspection added at index 0');
+    }
+
     notifyListeners();
+
+    return fullInspection; // <--- RETURN the fetched data
   }
 
   // Refresh by clearing + fetching
@@ -82,7 +108,7 @@ class InspectionHistoryProvider extends ChangeNotifier {
 
   void _listenForSocketUpdates() {
     socketProvider.onEvent('inspection_update', (data) {
-      debugPrint("🔔 Socket inspection update: $data");
+      debugPrint("DEBUG: 🔔 Socket inspection update: $data");
       if (data is Map<String, dynamic>) {
         addInspection(data);
       }

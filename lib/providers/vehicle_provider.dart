@@ -29,37 +29,38 @@ class VehicleProvider extends ChangeNotifier {
   }
 
   // Fetch vehicles from the backend and update provider
-Future<void> fetchVehicles(String token, {BuildContext? context}) async {
-  try {
-    final result = await VehicleService.getVehicles(token);
+  Future<void> fetchVehicles(String token, {BuildContext? context}) async {
+    try {
+      final result = await VehicleService.getVehicles(token);
 
-    // Fetch last inspection for each vehicle
-    final List<Map<String, dynamic>> vehiclesWithInspections = await Future.wait(
-      result.map((vehicle) async {
-        try {
-          final lastInspection = await VehicleService.getLastInspectionForVehicle(token, vehicle['id']);
-          return {
-            ...vehicle,
-            'lastInspection': lastInspection,
-          };
-        } catch (e) {
-          debugPrint("Failed to fetch last inspection for vehicle ${vehicle['id']}: $e");
-          return {
-            ...vehicle,
-            'lastInspection': null,
-          };
-        }
-      }),
-    );
+      // Fetch last inspection for each vehicle
+      final List<Map<String, dynamic>>
+      vehiclesWithInspections = await Future.wait(
+        result.map((vehicle) async {
+          try {
+            final lastInspection =
+                await VehicleService.getLastInspectionForVehicle(
+                  token,
+                  vehicle['id'],
+                );
+            return {...vehicle, 'lastInspection': lastInspection};
+          } catch (e) {
+            debugPrint(
+              "DEBUG: Failed to fetch last inspection for vehicle ${vehicle['id']}: $e",
+            );
+            return {...vehicle, 'lastInspection': null};
+          }
+        }),
+      );
 
-    _vehicles = vehiclesWithInspections;
-    notifyListeners();
-  } catch (e) {
-    final errorMessage = UIHelpers.parseError(e.toString());
-    if (context != null) UIHelpers.showError(context, errorMessage);
-    debugPrint("VehicleProvider fetchVehicles error: $errorMessage");
+      _vehicles = vehiclesWithInspections;
+      notifyListeners();
+    } catch (e) {
+      final errorMessage = UIHelpers.parseError(e.toString());
+      if (context != null) UIHelpers.showError(context, errorMessage);
+      debugPrint("DEBUG: VehicleProvider fetchVehicles error: $errorMessage");
+    }
   }
-}
 
   // Add a new vehicle
   Future<void> addVehicle(
@@ -93,7 +94,7 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     } catch (e) {
       final errorMessage = UIHelpers.parseError(e.toString());
       if (context != null) UIHelpers.showError(context, errorMessage);
-      debugPrint("VehicleProvider addVehicle error: $errorMessage");
+      debugPrint("DEBUG: VehicleProvider addVehicle error: $errorMessage");
     }
   }
 
@@ -124,12 +125,16 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     } catch (e) {
       final errorMessage = UIHelpers.parseError(e.toString());
       if (context != null) UIHelpers.showError(context, errorMessage);
-      debugPrint("VehicleProvider updateVehicle error: $errorMessage");
+      debugPrint("DEBUG: VehicleProvider updateVehicle error: $errorMessage");
     }
   }
 
   // Delete a vehicle
-  Future<void> deleteVehicle(String token, int vehicleId, {BuildContext? context}) async {
+  Future<void> deleteVehicle(
+    String token,
+    int vehicleId, {
+    BuildContext? context,
+  }) async {
     try {
       await VehicleService.deleteVehicle(token, vehicleId);
       _vehicles.removeWhere((v) => v['id'] == vehicleId);
@@ -138,7 +143,7 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
     } catch (e) {
       final errorMessage = UIHelpers.parseError(e.toString());
       if (context != null) UIHelpers.showError(context, errorMessage);
-      debugPrint("VehicleProvider deleteVehicle error: $errorMessage");
+      debugPrint("DEBUG: VehicleProvider deleteVehicle error: $errorMessage");
     }
   }
 
@@ -146,7 +151,4 @@ Future<void> fetchVehicles(String token, {BuildContext? context}) async {
   List<Map<String, dynamic>> vehiclesForOrg(int orgId) {
     return _vehicles.where((v) => v['org_id'] == orgId).toList();
   }
-
-  
-
 }

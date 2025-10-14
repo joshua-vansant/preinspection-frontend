@@ -24,20 +24,22 @@ class SocketProvider extends ChangeNotifier {
 
     final token = authProvider.token;
     if (token == null) {
-      debugPrint("SocketProvider: No auth token, cannot init socket");
+      debugPrint("DEBUG: SocketProvider: No auth token, cannot init socket");
       _showError("Not authenticated: cannot connect to socket.");
       return;
     }
 
     final orgId = authProvider.org?['id'];
     if (authProvider.isAdmin && orgId == null) {
-      debugPrint("SocketProvider: Admin missing org ID, cannot init socket");
+      debugPrint(
+        "DEBUG: SocketProvider: Admin missing org ID, cannot init socket",
+      );
       _showError("No organization found for admin.");
       return;
     }
 
     final uri = ApiConfig.baseUrl;
-    debugPrint("SocketProvider: Connecting to $uri");
+    debugPrint("DEBUG: SocketProvider: Connecting to $uri");
 
     _socket = IO.io(
       uri,
@@ -49,7 +51,7 @@ class SocketProvider extends ChangeNotifier {
     );
 
     _socket!.onConnect((_) {
-      debugPrint("SocketProvider: Connected to backend socket");
+      debugPrint("DEBUG: SocketProvider: Connected to backend socket");
 
       if (orgId != null) {
         _socket!.emit('join_org', {'org_id': orgId});
@@ -58,7 +60,9 @@ class SocketProvider extends ChangeNotifier {
       }
     });
 
-    _socket!.onDisconnect((_) => debugPrint("SocketProvider: Disconnected"));
+    _socket!.onDisconnect(
+      (_) => debugPrint("DEBUG: SocketProvider: Disconnected"),
+    );
     _socket!.onConnectError((err) => _showError("Socket connect error: $err"));
     _socket!.onError((err) => _showError("Socket error: $err"));
 
@@ -102,7 +106,7 @@ class SocketProvider extends ChangeNotifier {
   }
 
   void _showError(String message) {
-    debugPrint("SocketProvider: $message");
+    debugPrint("DEBUG: SocketProvider: $message");
     if (_context != null) {
       UIHelpers.showError(_context!, message);
     }

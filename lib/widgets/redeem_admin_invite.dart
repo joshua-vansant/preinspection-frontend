@@ -84,7 +84,9 @@ class _RedeemAdminInviteWidgetState extends State<RedeemAdminInviteWidget> {
           Text(
             _message!,
             style: TextStyle(
-              color: _message!.startsWith("Success") ? Colors.green : Colors.red,
+              color: _message!.startsWith("Success")
+                  ? Colors.green
+                  : Colors.red,
             ),
           ),
         ],

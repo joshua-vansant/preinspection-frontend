@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/providers/inspection_history_provider.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -40,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() {
-        _rememberMe = remember;
+      _rememberMe = remember;
     });
   }
 
@@ -59,6 +60,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (token != null && userData != null) {
         authProvider.setToken(token, userData['role'], userData: userData);
+
+        // After login succeeds
+        final inspectionHistoryProvider = context
+            .read<InspectionHistoryProvider>();
+        await inspectionHistoryProvider.fetchHistory();
 
         final prefs = await SharedPreferences.getInstance();
         if (_rememberMe) {

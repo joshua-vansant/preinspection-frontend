@@ -32,15 +32,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void setRole(String role) {
-  _role = role;
-  if (_user != null) {
-    _user!['role'] = role;
+    _role = role;
+    if (_user != null) {
+      _user!['role'] = role;
+    }
+    notifyListeners();
   }
-  notifyListeners();
-}
 
-
- void clearOrg() {
+  void clearOrg() {
     _org = null;
     if (_user != null) {
       _role = 'driver';
@@ -62,7 +61,6 @@ class AuthProvider extends ChangeNotifier {
     _org = orgData;
     notifyListeners();
   }
-
 
   void clearToken() {
     _token = null;
@@ -141,5 +139,4 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-
 }

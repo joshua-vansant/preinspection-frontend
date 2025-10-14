@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/providers/inspection_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/vehicle_provider.dart';
@@ -48,37 +49,15 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
       return;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    Map<String, dynamic>? lastInspection;
-    try {
-      lastInspection = await InspectionService.getLastInspection(
-        token,
-        vehicle['id'],
-      );
-    } catch (e) {
-      UIHelpers.showError(context, 'Failed to fetch last inspection: $e');
-    } finally {
-      Navigator.of(context).pop();
-    }
-
-    final computedType = (lastInspection == null)
-        ? 'pre'
-        : (lastInspection['type'] == 'pre' ? 'post' : 'pre');
-
-    context.read<VehicleProvider>().selectVehicle(vehicle);
-
+    // No need to start an inspection yet
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => TemplateSelectionScreen(
           vehicle: vehicle,
-          inspectionType: computedType,
-          lastInspection: lastInspection,
+          inspectionType:
+              'pre', // or compute dynamically if you add logic later
+          lastInspection: null,
         ),
       ),
     );

@@ -4,7 +4,6 @@ import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 import 'package:frontend/utils/ui_helpers.dart';
 
-
 class JoinOrganizationWidget extends StatefulWidget {
   const JoinOrganizationWidget({super.key});
 
@@ -46,7 +45,10 @@ class _JoinOrganizationWidgetState extends State<JoinOrganizationWidget> {
         authProvider.setOrg(result['organization']);
       }
 
-      UIHelpers.showSuccess(context, result['message'] ?? "Joined organization successfully");
+      UIHelpers.showSuccess(
+        context,
+        result['message'] ?? "Joined organization successfully",
+      );
       inviteController.clear();
     } catch (e) {
       UIHelpers.showError(context, "Error joining organization: $e");
