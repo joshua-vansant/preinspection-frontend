@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/api_config.dart';
 import 'package:frontend/providers/inspection_history_provider.dart';
+import 'package:frontend/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/inspection_service.dart';
@@ -95,9 +96,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           'DEBUG: Socket inspection_created received: ${inspection['id']}',
         );
         final provider = context.read<InspectionHistoryProvider>();
-        provider.addInspection(
-          inspection,
-        ); // 👈 use provider, not local setState
+        provider.addInspection(inspection);
       }
     });
 
@@ -114,7 +113,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
@@ -126,6 +124,15 @@ class _DriverDashboardState extends State<DriverDashboard> {
       appBar: AppBar(
         title: const Text('Driver Dashboard'),
         actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) => IconButton(
+              icon: Icon(
+                themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              ),
+              onPressed: () =>
+                  themeProvider.toggleTheme(!themeProvider.isDarkMode),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -442,6 +449,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) => IconButton(
+              icon: Icon(
+                themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              ),
+              onPressed: () =>
+                  themeProvider.toggleTheme(!themeProvider.isDarkMode),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -588,23 +604,42 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user) {
-    final isAdmin = user['role'] == 'admin';
-    return Card(
-      color: isAdmin ? Colors.amber.shade50 : null,
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: ListTile(
-        leading: Icon(
-          isAdmin ? Icons.admin_panel_settings : Icons.person,
-          color: isAdmin ? Colors.amber : null,
-        ),
-        title: Text(
-          '${user["first_name"]} ${user["last_name"]}${isAdmin ? " (Admin)" : ""}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(user["email"] ?? ""),
+Widget _buildUserCard(Map<String, dynamic> user) {
+  final isAdmin = user['role'] == 'admin';
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
+
+  final cardColor = isAdmin
+      ? (isDark ? Colors.amber.shade700 : Colors.amber.shade50)
+      : theme.cardColor;
+
+  final textColor = isAdmin
+      ? (isDark ? Colors.black : Colors.black87)
+      : theme.textTheme.bodyMedium?.color;
+
+  return Card(
+    color: cardColor,
+    elevation: 2,
+    margin: const EdgeInsets.symmetric(vertical: 6),
+    child: ListTile(
+      leading: Icon(
+        isAdmin ? Icons.admin_panel_settings : Icons.person,
+        color: isAdmin
+            ? (isDark ? Colors.black : Colors.amber)
+            : theme.iconTheme.color,
       ),
-    );
-  }
+      title: Text(
+        '${user["first_name"]} ${user["last_name"]}${isAdmin ? " (Admin)" : ""}',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
+      ),
+      subtitle: Text(
+        user["email"] ?? "",
+        style: TextStyle(color: textColor),
+      ),
+    ),
+  );
+}
 }

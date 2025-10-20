@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:camera/camera.dart';
-
+import 'providers/theme_provider.dart';
+import 'themes/themes.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -23,6 +25,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
           create: (context) =>
               SocketProvider(authProvider: context.read<AuthProvider>()),
@@ -50,10 +53,13 @@ class RootApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp(
       title: 'PreInspection',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       debugShowCheckedModeBanner: false,
       home: authProvider.isLoggedIn
           ? const DashboardScreen()
@@ -61,3 +67,4 @@ class RootApp extends StatelessWidget {
     );
   }
 }
+

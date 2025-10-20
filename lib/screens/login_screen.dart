@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isRegistering = false;
   bool _rememberMe = false;
   bool _loading = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -138,14 +139,31 @@ class _LoginScreenState extends State<LoginScreen> {
     TextInputAction action = TextInputAction.next,
     TextInputType type = TextInputType.text,
   }) {
+    final isPasswordField = obscure;
+
     return TextField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
-      obscureText: obscure,
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon: isPasswordField
+            ? IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              )
+            : null,
+      ),
+      obscureText: isPasswordField ? _obscurePassword : false,
       textInputAction: action,
       keyboardType: type,
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
