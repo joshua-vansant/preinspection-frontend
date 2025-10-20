@@ -161,40 +161,78 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
             _infoRow('Date', formattedDate),
             const SizedBox(height: 16),
             Card(
-              color: Colors.blue.shade50,
-              elevation: 2,
-              child: ListTile(
-                leading: const Icon(Icons.speed, color: Colors.blue),
-                title: const Text(
-                  'Start Mileage',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                trailing: Text(
-                  inspection['start_mileage']?.toString() ?? "N/A",
-                ),
-              ),
-            ),
+  color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.blueGrey.shade800 // darker background in dark mode
+      : Colors.blue.shade50,     // original light mode background
+  elevation: 2,
+  child: ListTile(
+    leading: Icon(
+      Icons.speed,
+      color: Colors.blue, // keep the icon color
+    ),
+    title: Text(
+      'Start Mileage',
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white // readable in dark mode
+            : Colors.blue.shade800,
+      ),
+    ),
+    trailing: Text(
+      inspection['start_mileage']?.toString() ?? "N/A",
+      style: TextStyle(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Colors.blue.shade800,
+      ),
+    ),
+  ),
+),
+
+
             const SizedBox(height: 8),
             Card(
-              color: Colors.green.shade50,
-              elevation: 2,
-              child: ListTile(
-                leading: const Icon(
-                  Icons.local_gas_station,
-                  color: Colors.green,
-                ),
-                title: const Text(
-                  'Fuel Level',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                trailing: Text('$fuelLevel%'),
+  color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.blueGrey.shade800 // darker background in dark mode
+      : Colors.blue.shade50,     // original light mode background
+  elevation: 2,
+  child: ListTile(
+    leading: Icon(
+      Icons.speed,
+      color: Colors.blue, // keep the icon color
+    ),
+    title: Text(
+      'Fuel Level',
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white 
+            : Colors.green.shade800,
+      ),
+    ),
+    trailing: Text(
+      inspection['start_mileage']?.toString() ?? "N/A",
+      style: TextStyle(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Colors.green.shade800,
+      ),
+    ),
+  ),
+),
+
+
+            const SizedBox(height: 16),
+            Text(
+              'Results:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Theme.of(context).textTheme.titleMedium?.color,
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Results:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+
             const SizedBox(height: 4),
             Expanded(
               child: ListView(
@@ -204,8 +242,18 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     child: ListTile(
-                      title: Text(displayKey),
-                      trailing: Text(displayValue),
+                      title: Text(
+                        displayKey,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                      trailing: Text(
+                        displayValue,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                      ),
                     ),
                   );
                 }).toList(),
@@ -214,10 +262,15 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
             if (inspection['notes'] != null &&
                 (inspection['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Notes:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.titleMedium?.color,
+                ),
               ),
+
               Text(inspection['notes']),
             ],
           ],
@@ -231,7 +284,13 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
           Text(value),
         ],
       ),
