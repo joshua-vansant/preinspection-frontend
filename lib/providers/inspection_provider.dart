@@ -167,6 +167,7 @@ class InspectionProvider extends ChangeNotifier {
         debugPrint("DEBUG: ✅ Using existing draft (ID: $_inspectionId)");
       }
 
+
       // Submit finalized inspection
       final payload = {..._currentInspection, 'inspection_id': _inspectionId};
 
@@ -180,7 +181,7 @@ class InspectionProvider extends ChangeNotifier {
           "DEBUG: ✅ Inspection submitted successfully (ID: $submittedId)",
         );
 
-        // ✅ Reset state to prevent reusing old inspection ID
+        // Reset state to prevent reusing old inspection ID
         resetInspection();
       } else {
         debugPrint("DEBUG: ⚠️ Backend did not return inspection_id");

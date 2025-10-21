@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/services/walkthrough_service.dart';
 import 'package:frontend/widgets/camera_screen_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/inspection_provider.dart';
 import '../utils/ui_helpers.dart';
 import 'dashboard_screen.dart';
-import 'package:mime/mime.dart';
 
 class InspectionFormScreen extends StatefulWidget {
   final Map<String, dynamic> inspection;
@@ -31,47 +31,41 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
   final TextEditingController notesController = TextEditingController();
   final TextEditingController fuelNotesController = TextEditingController();
   late TextEditingController startMileageController;
-
+  final ScrollController _scrollController = ScrollController();
   List<CameraDescription> _cameras = [];
 
   @override
   void initState() {
     super.initState();
-    _initCameras();
     notesController.text = widget.inspection['notes'] ?? '';
     fuelNotesController.text = widget.inspection['fuel_notes'] ?? '';
     startMileageController = TextEditingController(
       text: widget.inspection['start_mileage']?.toString() ?? '',
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final inspectionProvider = context.read<InspectionProvider>();
-      final isEdit = widget.editMode && widget.inspection.containsKey('id');
+    _initCameras();
+    Future.microtask(() => _initInspection());
+  }
 
-      final items =
-          inspectionProvider.currentInspection['template_items'] ?? [];
-      for (var item in items) {
-        debugPrint(
-          'DEBUG: Template item: id=${item['id']} name=${item['name']}',
-        );
-      }
+  Future<void> _initInspection() async {
+    final inspectionProvider = context.read<InspectionProvider>();
+    final isEdit = widget.editMode && widget.inspection.containsKey('id');
 
-      if (isEdit) {
-        await inspectionProvider.startInspection(
-          vehicleId: widget.inspection['vehicle_id'],
-          type: widget.inspection['type'] ?? 'pre-trip',
-          initialData: widget.inspection,
-          template: widget.inspection['template'],
-        );
-      } else {
-        await inspectionProvider.startInspection(
-          vehicleId: widget.vehicleId!,
-          type: widget.inspectionType ?? 'pre-trip',
-          templateId: widget.inspection['template_id'],
-          template: widget.inspection,
-        );
-      }
-    });
+    if (isEdit) {
+      await inspectionProvider.startInspection(
+        vehicleId: widget.inspection['vehicle_id'],
+        type: widget.inspection['type'] ?? 'pre-trip',
+        initialData: widget.inspection,
+        template: widget.inspection['template'],
+      );
+    } else {
+      await inspectionProvider.startInspection(
+        vehicleId: widget.vehicleId!,
+        type: widget.inspectionType ?? 'pre-trip',
+        templateId: widget.inspection['template_id'],
+        template: widget.inspection,
+      );
+    }
   }
 
   Future<void> _initCameras() async {
@@ -83,7 +77,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
       });
     } catch (e) {
       debugPrint('⚠️ Failed to get cameras: $e');
-      // optionally show a snackbar or error dialog
     }
   }
 
@@ -96,15 +89,11 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     final file = await Navigator.push<File>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            CameraScreen(cameras: _cameras, onPictureTaken: (file) {}),
+        builder: (_) => CameraScreen(cameras: _cameras, onPictureTaken: (file) {}),
       ),
     );
 
-    if (file == null) {
-      debugPrint('No file returned from camera');
-      return;
-    }
+    if (file == null) return;
 
     final itemId = int.tryParse(inspectionItemId);
     if (itemId == null) {
@@ -114,10 +103,7 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
 
     try {
       final inspectionProvider = context.read<InspectionProvider>();
-      await inspectionProvider.uploadPhoto(
-        file,
-        inspectionItemId: int.tryParse(inspectionItemId),
-      );
+      await inspectionProvider.uploadPhoto(file, inspectionItemId: itemId);
 
       if (!mounted) return;
 
@@ -167,6 +153,15 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
   }
 
   @override
+  void dispose() {
+    notesController.dispose();
+    fuelNotesController.dispose();
+    startMileageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final inspectionProvider = Provider.of<InspectionProvider>(context);
     final current = inspectionProvider.currentInspection;
@@ -179,17 +174,15 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
+          controller: _scrollController,
           children: [
-            ...items.map<Widget>((item) {
+            ...items.map((item) {
               final idStr = item['id'].toString();
               final answer = answers[idStr] ?? 'no';
-
               final itemPhotos = inspectionPhotos
-                  .where(
-                    (p) =>
-                        p['inspection_item_id']?.toString() == idStr &&
-                        p['photo_url'] != null,
-                  )
+                  .where((p) =>
+                      p['inspection_item_id']?.toString() == idStr &&
+                      p['photo_url'] != null)
                   .toList();
 
               return Padding(
@@ -201,7 +194,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Question + Switch
                         Row(
                           children: [
                             Expanded(
@@ -221,9 +213,8 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                             Switch(
                               value: answer == "yes",
                               onChanged: (val) {
-                                final updatedResults = Map<String, String>.from(
-                                  answers,
-                                );
+                                final updatedResults =
+                                    Map<String, String>.from(answers);
                                 updatedResults[idStr] = val ? "yes" : "no";
                                 inspectionProvider.updateField(
                                   'results',
@@ -234,84 +225,44 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-
-                        // Photos Section
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
                             ...itemPhotos.map((photo) {
                               final url = photo['photo_url'] ?? '';
-                              if (url.isEmpty) {
-                                return Container(
-                                  width: 80,
-                                  height: 80,
-                                  color: Colors.grey[300],
-                                  child: const Icon(
-                                    Icons.broken_image,
-                                    color: Colors.grey,
-                                  ),
-                                );
-                              }
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  url,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    width: 80,
-                                    height: 80,
-                                    color: Colors.grey[300],
-                                    child: const Icon(
-                                      Icons.broken_image,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              );
+                              return url.isEmpty
+                                  ? Container(
+                                      width: 80,
+                                      height: 80,
+                                      color: Colors.grey[300],
+                                      child: const Icon(
+                                        Icons.broken_image,
+                                        color: Colors.grey,
+                                      ),
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        url,
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    );
                             }),
-
-                            // Add Photo Button
                             GestureDetector(
-                              onTap: () {
-                                final items =
-                                    inspectionProvider
-                                        .currentInspection['template_items'] ??
-                                    [];
-
-                                // Debug print all template items
-                                debugPrint('--- Current Template Items ---');
-                                for (var item in items) {
-                                  debugPrint(
-                                    'Template item: id=${item['id']} name=${item['name']}',
-                                  );
-                                }
-                                debugPrint('Tapped item idStr=$idStr');
-
-                                // Check if tapped item exists in template
-                                final itemExists = items.any(
-                                  (i) => i['id'].toString() == idStr,
-                                );
-                                if (!itemExists) {
-                                  UIHelpers.showError(
-                                    context,
-                                    "Item does not belong to the inspection's template",
-                                  );
-                                  return;
-                                }
-
-                                // Call photo picker/upload only if valid
-                                _pickAndUploadPhoto(inspectionItemId: idStr);
-                              },
+                              onTap: () =>
+                                  _pickAndUploadPhoto(inspectionItemId: idStr),
                               child: Container(
                                 width: 80,
                                 height: 80,
                                 decoration: BoxDecoration(
                                   color: Colors.grey[200],
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey[400]!),
+                                  border: Border.all(
+                                    color: Colors.grey[400]!,
+                                  ),
                                 ),
                                 child: const Icon(
                                   Icons.add_a_photo,
@@ -327,10 +278,7 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 16),
-
-            // Notes
             TextField(
               controller: notesController,
               maxLines: 4,
@@ -341,8 +289,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
               onChanged: (val) => inspectionProvider.updateField('notes', val),
             ),
             const SizedBox(height: 16),
-
-            // Start Mileage
             TextField(
               controller: startMileageController,
               keyboardType: TextInputType.number,
@@ -353,8 +299,6 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
               ),
             ),
             const SizedBox(height: 8),
-
-            // Odometer Verified
             Row(
               children: [
                 const Text("Odometer Verified"),
@@ -366,35 +310,22 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Fuel Level (simple Slider example)
-            Text("Fuel Level"),
-            Slider(
-              value: (current['fuel_level'] ?? 0.0) as double,
-              min: 0.0,
-              max: 1.0,
-              divisions: 4,
-              label: "${((current['fuel_level'] ?? 0.0) * 100).round()}%",
-              onChanged: (val) {
-                inspectionProvider.updateField('fuel_level', val);
-              },
-            ),
-            const SizedBox(height: 8),
-
-            // Fuel Notes
-            TextField(
-              controller: fuelNotesController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: "Fuel Notes",
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (val) =>
-                  inspectionProvider.updateField('fuel_notes', val),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Fuel Level"),
+                Slider(
+                  value: (current['fuel_level'] ?? 0.0) as double,
+                  min: 0.0,
+                  max: 1.0,
+                  divisions: 10,
+                  label: "${((current['fuel_level'] ?? 0.0) * 100).round()}%",
+                  onChanged: (val) =>
+                      inspectionProvider.updateField('fuel_level', val),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-
-            // Submit Button
             ElevatedButton(
               onPressed: _submitInspection,
               child: Text(

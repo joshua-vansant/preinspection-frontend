@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:showcaseview/showcaseview.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 
 class InviteDriverWidget extends StatefulWidget {
-  const InviteDriverWidget({super.key});
+  final GlobalKey? showcaseKey;
+  const InviteDriverWidget({super.key, this.showcaseKey});
 
   @override
   State<InviteDriverWidget> createState() => _InviteDriverWidgetState();
@@ -67,61 +69,73 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ElevatedButton(
-              onPressed: _loading ? null : _fetchInviteCode,
-              child: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      _inviteCode == null ? "Invite Drivers" : "Get New Code",
-                    ),
-            ),
+            // Only wrap the button in Showcase
+            if (widget.showcaseKey != null)
+              Showcase(
+                key: widget.showcaseKey!,
+                description: 'Invite new drivers to your organization here',
+                child: _buildInviteButton(),
+              )
+            else
+              _buildInviteButton(),
+
             if (_inviteCode != null) ...[
               const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: _copied ? Colors.green[300] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    SelectableText(
-                      _inviteCode!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: _copyToClipboard,
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _copied ? Colors.green : Colors.grey[300],
-                        ),
-                        child: const Icon(
-                          Icons.copy,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildInviteCodeBox(),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInviteButton() {
+    return ElevatedButton(
+      onPressed: _loading ? null : _fetchInviteCode,
+      child: _loading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(_inviteCode == null ? "Invite Drivers" : "Get New Code"),
+    );
+  }
+
+  Widget _buildInviteCodeBox() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _copied ? Colors.green[300] : Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          SelectableText(
+            _inviteCode!,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: _copyToClipboard,
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _copied ? Colors.green : Colors.grey[300],
+              ),
+              child: const Icon(
+                Icons.copy,
+                size: 18,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

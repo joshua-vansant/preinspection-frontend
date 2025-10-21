@@ -87,7 +87,7 @@ class _AdminInspectionsScreenState extends State<AdminInspectionsScreen> {
                   itemBuilder: (context, index) {
                     final inspection = inspectionHistoryProvider.history[index];
                     final formattedDate = parseUtcToLocal(
-                      inspection['created_at'],
+                      inspection['updated_at'],
                     );
 
                     return Card(

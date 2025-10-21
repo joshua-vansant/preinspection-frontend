@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
+import 'package:frontend/services/walkthrough_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
@@ -12,7 +13,13 @@ import 'package:frontend/utils/ui_helpers.dart';
 
 class AdminDrawerWidget extends StatefulWidget {
   final VoidCallback? onOrgCreated;
-  const AdminDrawerWidget({super.key, this.onOrgCreated});
+  final VoidCallback? onResetWalkthrough;
+
+  const AdminDrawerWidget({
+    super.key,
+    this.onOrgCreated,
+    this.onResetWalkthrough,
+  });
 
   @override
   State<AdminDrawerWidget> createState() => _AdminDrawerWidgetState();
@@ -100,7 +107,32 @@ class _AdminDrawerWidgetState extends State<AdminDrawerWidget> {
               ),
             ),
             const Divider(),
-            // Fixed bottom actions
+            // Reset walkthrough
+            ListTile(
+              leading: const Icon(Icons.refresh, color: Colors.green),
+              title: const Text(
+                "Reset Walkthrough",
+                style: TextStyle(color: Colors.green),
+              ),
+              onTap: () async {
+                WalkthroughService.resetAdminWalkthrough();
+                Navigator.pop(context);
+                // Wait for drawer to close
+                await Future.delayed(const Duration(milliseconds: 250));
+
+                if (widget.onResetWalkthrough != null && context.mounted) {
+                  widget.onResetWalkthrough!();
+                }
+
+                if (context.mounted) {
+                  UIHelpers.showSuccess(
+                    context,
+                    "Walkthrough reset. Restarting from the dashboard.",
+                  );
+                }
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.person, color: Colors.blue),
               title: const Text(

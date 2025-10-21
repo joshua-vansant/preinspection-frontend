@@ -9,9 +9,11 @@ import 'join_organization_widget.dart';
 import 'create_organization_widget.dart';
 import 'package:frontend/utils/ui_helpers.dart';
 import 'package:frontend/screens/edit_account_screen.dart';
+import '../services/walkthrough_service.dart';
 
 class DriverDrawerWidget extends StatelessWidget {
-  const DriverDrawerWidget({super.key});
+  final VoidCallback? onResetWalkthrough;
+  const DriverDrawerWidget({super.key, this.onResetWalkthrough});
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +107,7 @@ class DriverDrawerWidget extends StatelessWidget {
 
                         try {
                           await OrganizationService.leaveOrg(token);
-                          authProvider.clearOrg(); // ✅ Clears org info locally
+                          authProvider.clearOrg();
                           if (!context.mounted) return;
                           UIHelpers.showSuccess(
                             context,
@@ -124,6 +126,18 @@ class DriverDrawerWidget extends StatelessWidget {
                       },
                     ),
                   ],
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.refresh, color: Colors.green),
+                    title: const Text("Reset Walkthrough", 
+                      style: TextStyle(color: Colors.green),),
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (onResetWalkthrough != null) {
+                        onResetWalkthrough!();
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
