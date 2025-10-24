@@ -103,40 +103,61 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
   }
 
   Widget _buildInviteCodeBox() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _copied ? Colors.green[300] : Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
+
+  final backgroundColor = _copied
+      ? Colors.green[300]
+      : isDark
+          ? Colors.grey[800]
+          : Colors.grey[200];
+
+  final textColor = isDark ? Colors.white : Colors.black;
+  final iconBg = _copied
+      ? Colors.green
+      : isDark
+          ? Colors.grey[700]
+          : Colors.grey[300];
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(
+        color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
       ),
-      child: Row(
-        children: [
-          SelectableText(
-            _inviteCode!,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+    ),
+    child: Row(
+      children: [
+        SelectableText(
+          _inviteCode!,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(width: 8),
+        InkWell(
+          onTap: _copyToClipboard,
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: iconBg,
+            ),
+            child: const Icon(
+              Icons.copy,
+              size: 18,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: _copyToClipboard,
-            borderRadius: BorderRadius.circular(6),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _copied ? Colors.green : Colors.grey[300],
-              ),
-              child: const Icon(
-                Icons.copy,
-                size: 18,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 }

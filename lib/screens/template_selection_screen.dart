@@ -116,40 +116,48 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
         children: [
           // Vehicle header card
           Card(
-            color: Colors.blue.shade50,
-            margin: const EdgeInsets.all(12),
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Vehicle: ${(() {
-                      final parts = [widget.vehicle['make'], widget.vehicle['model']].where((v) => v != null && v.toString().isNotEmpty).toList();
-                      return parts.isNotEmpty ? parts.join(' ') : widget.vehicle['id'];
-                    })()}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Inspection type: ${widget.inspectionType.toUpperCase()}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  if (widget.lastInspection != null) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      'Last inspection ID: ${widget.lastInspection!['id']}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ],
-              ),
+  color: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.surfaceContainerHighest // or surfaceVariant
+      : Colors.blue.shade50,
+  margin: const EdgeInsets.all(12),
+  elevation: 2,
+  child: Padding(
+    padding: const EdgeInsets.all(12.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Vehicle: ${(() {
+            final parts = [widget.vehicle['make'], widget.vehicle['model']]
+                .where((v) => v != null && v.toString().isNotEmpty)
+                .toList();
+            return parts.isNotEmpty ? parts.join(' ') : widget.vehicle['id'];
+          })()}',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Inspection type: ${widget.inspectionType.toUpperCase()}',
+          style: const TextStyle(fontSize: 14),
+        ),
+        if (widget.lastInspection != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Last inspection ID: ${widget.lastInspection!['id']}',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
             ),
           ),
+        ],
+      ],
+    ),
+  ),
+),
+
           // Template list
           Expanded(
             child: ListView.builder(
