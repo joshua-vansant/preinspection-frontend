@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/utils/ui_helpers.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart';
 import 'package:showcaseview/showcaseview.dart';
 import '../providers/auth_provider.dart';
 import '../services/organization_service.dart';
 
 class InviteDriverWidget extends StatefulWidget {
   final GlobalKey? showcaseKey;
+
   const InviteDriverWidget({super.key, this.showcaseKey});
 
   @override
@@ -22,12 +23,10 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
   Future<void> _fetchInviteCode() async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
-      if (!mounted) return;
       UIHelpers.showError(context, "Not authenticated");
       return;
     }
 
-    if (!mounted) return;
     setState(() {
       _loading = true;
       _copied = false;
@@ -38,12 +37,11 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
           ? await OrganizationService.getInviteCode(token)
           : await OrganizationService.getNewCode(token);
 
-      if (mounted) setState(() => _inviteCode = code);
+      setState(() => _inviteCode = code);
     } catch (e) {
-      if (!mounted) return;
-      UIHelpers.showError(context, "Error fetching code: $e");
+      UIHelpers.showError(context, "Error fetching invite code: $e");
     } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() => _loading = false);
     }
   }
 
@@ -51,113 +49,151 @@ class _InviteDriverWidgetState extends State<InviteDriverWidget> {
     if (_inviteCode == null) return;
 
     await Clipboard.setData(ClipboardData(text: _inviteCode!));
-
-    if (!mounted) return;
     setState(() => _copied = true);
     UIHelpers.showSuccess(context, "Invite code copied!");
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 800));
     if (mounted) setState(() => _copied = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Only wrap the button in Showcase
-            if (widget.showcaseKey != null)
-              Showcase(
-                key: widget.showcaseKey!,
-                description: 'Invite new drivers to your organization here',
-                child: _buildInviteButton(),
-              )
-            else
-              _buildInviteButton(),
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-            if (_inviteCode != null) ...[
-              const SizedBox(width: 12),
-              _buildInviteCodeBox(),
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.person_add_alt_1_rounded,
+                      color: colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Invite Drivers",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (widget.showcaseKey != null)
+                    Showcase(
+                      key: widget.showcaseKey!,
+                      description:
+                          "Generate an invite code to add new drivers to your organization.",
+                      child: _buildInviteButton(colorScheme),
+                    )
+                  else
+                    _buildInviteButton(colorScheme),
+                  if (_inviteCode != null) ...[
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildInviteCodeBox(isDark, colorScheme)),
+                  ],
+                ],
+              ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInviteButton() {
-    return ElevatedButton(
+  Widget _buildInviteButton(ColorScheme colorScheme) {
+    return ElevatedButton.icon(
       onPressed: _loading ? null : _fetchInviteCode,
-      child: _loading
+      icon: _loading
           ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
-          : Text(_inviteCode == null ? "Invite Drivers" : "Get New Code"),
+          : const Icon(Icons.qr_code_2_rounded, size: 20),
+      label: Text(
+        _loading
+            ? "Loading..."
+            : _inviteCode == null
+                ? "Generate Code"
+                : "New Code",
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
     );
   }
 
-  Widget _buildInviteCodeBox() {
-  final theme = Theme.of(context);
-  final isDark = theme.brightness == Brightness.dark;
+  Widget _buildInviteCodeBox(bool isDark, ColorScheme colorScheme) {
+    final backgroundColor = _copied
+        ? Colors.green[300]
+        : isDark
+            ? Colors.grey[850]
+            : Colors.grey[200];
 
-  final backgroundColor = _copied
-      ? Colors.green[300]
-      : isDark
-          ? Colors.grey[800]
-          : Colors.grey[200];
+    final textColor = isDark ? Colors.white : Colors.black;
+    final iconBg = _copied
+        ? Colors.green
+        : isDark
+            ? Colors.grey[700]
+            : Colors.grey[300];
 
-  final textColor = isDark ? Colors.white : Colors.black;
-  final iconBg = _copied
-      ? Colors.green
-      : isDark
-          ? Colors.grey[700]
-          : Colors.grey[300];
-
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(
-        color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+        ),
       ),
-    ),
-    child: Row(
-      children: [
-        SelectableText(
-          _inviteCode!,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: textColor,
-          ),
-        ),
-        const SizedBox(width: 8),
-        InkWell(
-          onTap: _copyToClipboard,
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: iconBg,
-            ),
-            child: const Icon(
-              Icons.copy,
-              size: 18,
-              color: Colors.white,
+      child: Row(
+        children: [
+          Expanded(
+            child: SelectableText(
+              _inviteCode!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: textColor,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: _copyToClipboard,
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: iconBg,
+              ),
+              child: const Icon(Icons.copy, size: 18, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

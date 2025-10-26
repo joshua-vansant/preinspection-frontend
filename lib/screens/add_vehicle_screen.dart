@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AddVehicleScreen extends StatefulWidget {
   final Map<String, dynamic>? existingVehicle;
@@ -49,11 +50,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    HapticFeedback.mediumImpact();
 
     final vehicleData = <String, dynamic>{
-      'number': _numberController.text.isNotEmpty
-          ? _numberController.text
-          : null,
+      'number': _numberController.text.isNotEmpty ? _numberController.text : null,
       'license_plate': _licensePlateController.text,
       'make': _makeController.text.isNotEmpty ? _makeController.text : null,
       'model': _modelController.text.isNotEmpty ? _modelController.text : null,
@@ -72,41 +72,73 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isEditing = widget.existingVehicle != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? "Edit Vehicle" : "Add Vehicle")),
-      body: SafeArea(
-        child: Container(
-          color: Colors.grey[100],
-          padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(isEditing ? "Edit Vehicle" : "Add Vehicle"),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.05),
+              theme.colorScheme.secondary.withOpacity(0.03),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
           child: Center(
-            child: Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Form(
+                    key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          "Vehicle Details",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.directions_car_rounded,
+                                size: 64,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Vehicle Details",
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 24),
+
+                        // Required Field
                         TextFormField(
                           controller: _licensePlateController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'License Plate *',
-                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor:
+                                theme.colorScheme.surfaceVariant.withOpacity(0.2),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -115,82 +147,65 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "Optional Info",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+
+                        const SizedBox(height: 20),
+
+                        Text(
+                          "Optional Information",
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 8),
-                        TextFormField(
+                        const SizedBox(height: 12),
+
+                        _buildField(
                           controller: _numberController,
-                          decoration: const InputDecoration(
-                            labelText: 'Vehicle Number',
-                            border: OutlineInputBorder(),
-                          ),
+                          label: 'Vehicle Number',
+                          theme: theme,
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
+                        _buildField(
                           controller: _makeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Make',
-                            border: OutlineInputBorder(),
-                          ),
+                          label: 'Make',
+                          theme: theme,
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
+                        _buildField(
                           controller: _modelController,
-                          decoration: const InputDecoration(
-                            labelText: 'Model',
-                            border: OutlineInputBorder(),
-                          ),
+                          label: 'Model',
+                          theme: theme,
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
+                        _buildField(
                           controller: _yearController,
-                          decoration: const InputDecoration(
-                            labelText: 'Year',
-                            border: OutlineInputBorder(),
-                          ),
+                          label: 'Year',
+                          theme: theme,
                           keyboardType: TextInputType.number,
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
+                        _buildField(
                           controller: _vinController,
-                          decoration: const InputDecoration(
-                            labelText: 'VIN',
-                            border: OutlineInputBorder(),
-                          ),
+                          label: 'VIN',
+                          theme: theme,
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
+                        _buildField(
                           controller: _mileageController,
-                          decoration: const InputDecoration(
-                            labelText: 'Mileage',
-                            border: OutlineInputBorder(),
-                          ),
+                          label: 'Mileage',
+                          theme: theme,
                           keyboardType: TextInputType.number,
                         ),
 
                         const SizedBox(height: 24),
-                        SizedBox(
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: _submit,
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              backgroundColor: Colors.blue.shade600,
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            child: Text(
-                              isEditing ? 'Update Vehicle' : 'Save Vehicle',
+
+                        ElevatedButton.icon(
+                          onPressed: _submit,
+                          icon: Icon(
+                            isEditing ? Icons.save_outlined : Icons.add_rounded,
+                            size: 22,
+                          ),
+                          label: Text(
+                            isEditing ? 'Update Vehicle' : 'Save Vehicle',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
@@ -200,6 +215,30 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required ThemeData theme,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.2),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
         ),
       ),

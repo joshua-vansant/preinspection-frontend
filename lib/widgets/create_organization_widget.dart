@@ -30,7 +30,7 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
 
     if (token == null || token.isEmpty) {
       if (!mounted) return;
-      UIHelpers.showError(context, "Error leaving org. Try logging in again.");
+      UIHelpers.showError(context, "Please log in again to continue.");
       return;
     }
 
@@ -39,7 +39,7 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
       if (!mounted) return;
       UIHelpers.showError(
         context,
-        "Organization name must be at least 3 characters",
+        "Organization name must be at least 3 characters long.",
       );
       return;
     }
@@ -49,7 +49,10 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
     try {
       final org = await OrganizationService.createOrg(token, name);
       authProvider.setOrg(org['organization']);
-      if (widget.onCreated != null) widget.onCreated!(org['organization']);
+      widget.onCreated?.call(org['organization']);
+      if (mounted) {
+        UIHelpers.showSuccess(context, "Organization created successfully!");
+      }
     } catch (e) {
       if (!mounted) return;
       UIHelpers.showError(context, "Error creating organization: $e");
@@ -60,27 +63,78 @@ class _CreateOrganizationWidgetState extends State<CreateOrganizationWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextField(
-          controller: _nameController,
-          decoration: const InputDecoration(
-            labelText: 'Organization Name',
-            border: OutlineInputBorder(),
-          ),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.apartment_rounded, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  "Create an Organization",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: "Organization Name",
+                hintText: "Enter your organization's name",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                prefixIcon: const Icon(Icons.edit_rounded),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: _creating ? null : _createOrganization,
+                icon: _creating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.add_business_rounded, size: 20),
+                label: Text(
+                  _creating ? "Creating..." : "Create Organization",
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: _creating ? null : _createOrganization,
-          child: _creating
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Create Organization'),
-        ),
-      ],
+      ),
     );
   }
 }

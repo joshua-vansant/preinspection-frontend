@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/services/walkthrough_service.dart';
 import 'package:frontend/widgets/camera_screen_widget.dart';
 import 'package:provider/provider.dart';
@@ -168,29 +169,45 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
     final answers = current['results'] ?? {};
     final items = current['template_items'] ?? [];
     final inspectionPhotos = inspectionProvider.inspectionPhotos;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Vehicle Inspection')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          controller: _scrollController,
-          children: [
-            ...items.map((item) {
-              final idStr = item['id'].toString();
-              final answer = answers[idStr] ?? 'no';
-              final itemPhotos = inspectionPhotos
-                  .where((p) =>
-                      p['inspection_item_id']?.toString() == idStr &&
-                      p['photo_url'] != null)
-                  .toList();
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(widget.editMode ? 'Edit Inspection' : 'Vehicle Inspection'),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.05),
+              theme.colorScheme.secondary.withOpacity(0.03),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: ListView(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            children: [
+              ...items.map((item) {
+                final idStr = item['id'].toString();
+                final answer = answers[idStr] ?? 'no';
+                final itemPhotos = inspectionPhotos
+                    .where((p) =>
+                        p['inspection_item_id']?.toString() == idStr &&
+                        p['photo_url'] != null)
+                    .toList();
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Card(
-                  elevation: 1,
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -202,17 +219,22 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                                 children: [
                                   Text(
                                     item['name'] ?? '',
-                                    style: const TextStyle(
+                                    style: theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  Text(item['question'] ?? ''),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item['question'] ?? '',
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
                                 ],
                               ),
                             ),
                             Switch(
                               value: answer == "yes",
                               onChanged: (val) {
+                                HapticFeedback.selectionClick();
                                 final updatedResults =
                                     Map<String, String>.from(answers);
                                 updatedResults[idStr] = val ? "yes" : "no";
@@ -224,7 +246,7 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -235,11 +257,8 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                                   ? Container(
                                       width: 80,
                                       height: 80,
-                                      color: Colors.grey[300],
-                                      child: const Icon(
-                                        Icons.broken_image,
-                                        color: Colors.grey,
-                                      ),
+                                      color: theme.dividerColor.withOpacity(0.2),
+                                      child: const Icon(Icons.broken_image),
                                     )
                                   : ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
@@ -258,15 +277,17 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                                 width: 80,
                                 height: 80,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                  color: theme.colorScheme.surfaceVariant
+                                      .withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: Colors.grey[400]!,
+                                    color: theme.colorScheme.outline
+                                        .withOpacity(0.3),
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.add_a_photo,
-                                  color: Colors.grey,
+                                child: Icon(
+                                  Icons.add_a_photo_rounded,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -275,65 +296,104 @@ class _InspectionFormScreenState extends State<InspectionFormScreen> {
                       ],
                     ),
                   ),
-                ),
-              );
-            }),
-            const SizedBox(height: 16),
-            TextField(
-              controller: notesController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: "Additional Notes",
-                border: OutlineInputBorder(),
+                );
+              }),
+              const SizedBox(height: 16),
+              _buildTextField(
+                context,
+                controller: notesController,
+                label: "Additional Notes",
+                maxLines: 4,
+                icon: Icons.note_alt_outlined,
               ),
-              onChanged: (val) => inspectionProvider.updateField('notes', val),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: startMileageController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Start Mileage"),
-              onChanged: (val) => inspectionProvider.updateField(
-                'start_mileage',
-                int.tryParse(val),
+              const SizedBox(height: 16),
+              _buildTextField(
+                context,
+                controller: startMileageController,
+                label: "Start Mileage",
+                keyboardType: TextInputType.number,
+                icon: Icons.speed_rounded,
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text("Odometer Verified"),
-                Checkbox(
-                  value: current['odometer_verified'] ?? false,
-                  onChanged: (val) =>
-                      inspectionProvider.updateField('odometer_verified', val),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Fuel Level"),
-                Slider(
-                  value: (current['fuel_level'] ?? 0.0) as double,
-                  min: 0.0,
-                  max: 1.0,
-                  divisions: 10,
-                  label: "${((current['fuel_level'] ?? 0.0) * 100).round()}%",
-                  onChanged: (val) =>
-                      inspectionProvider.updateField('fuel_level', val),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _submitInspection,
-              child: Text(
-                widget.editMode ? "Update Inspection" : "Submit Inspection",
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Text("Odometer Verified"),
+                  Checkbox(
+                    value: current['odometer_verified'] ?? false,
+                    onChanged: (val) => inspectionProvider.updateField(
+                      'odometer_verified',
+                      val,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                "Fuel Level",
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              Slider(
+                value: (current['fuel_level'] ?? 0.0) as double,
+                min: 0.0,
+                max: 1.0,
+                divisions: 10,
+                label:
+                    "${((current['fuel_level'] ?? 0.0) * 100).round()}%",
+                onChanged: (val) =>
+                    inspectionProvider.updateField('fuel_level', val),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _submitInspection,
+                icon: Icon(widget.editMode
+                    ? Icons.save_alt_rounded
+                    : Icons.check_circle_outline),
+                label: Text(
+                  widget.editMode
+                      ? "Update Inspection"
+                      : "Submit Inspection",
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    BuildContext context, {
+    required TextEditingController controller,
+    required String label,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    IconData? icon,
+  }) {
+    final theme = Theme.of(context);
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon != null ? Icon(icon) : null,
+        filled: true,
+        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.2),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
       ),
     );

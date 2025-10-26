@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 
 final lightTheme = ThemeData(
   brightness: Brightness.light,
-  primarySwatch: Colors.blue,
+colorScheme: ColorScheme.fromSeed(
+  seedColor: Colors.blue,
+  brightness: Brightness.light,
+),
   scaffoldBackgroundColor: Colors.white,
+  useMaterial3: true,
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.blue,
     foregroundColor: Colors.white,
@@ -45,8 +49,12 @@ final lightTheme = ThemeData(
 
 final darkTheme = ThemeData(
   brightness: Brightness.dark,
-  primarySwatch: Colors.blue,
+colorScheme: ColorScheme.fromSeed(
+  seedColor: Colors.blueAccent,
+  brightness: Brightness.dark,
+),
   scaffoldBackgroundColor: Colors.grey[900],
+  useMaterial3: true,
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.blueAccent,
     foregroundColor: Colors.white,
