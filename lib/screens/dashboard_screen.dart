@@ -95,7 +95,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
     final socket = IO.io(
       ApiConfig.baseUrl,
-      IO.OptionBuilder().setTransports(['websocket']).enableAutoConnect().build(),
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .enableAutoConnect()
+          .build(),
     );
 
     socket.connect();
@@ -169,9 +172,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
               description: 'Toggle light/dark mode here',
               child: IconButton(
                 icon: Icon(
-                  themeProvider.isDarkMode
-                      ? Icons.dark_mode
-                      : Icons.light_mode,
+                  themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
@@ -213,20 +214,22 @@ class _DriverDashboardState extends State<DriverDashboard> {
               children: [
                 // Header
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   child: Column(
                     children: [
-                      Icon(Icons.directions_car_filled,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.directions_car_filled,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(height: 6),
                       if (user != null)
                         Text(
                           "Welcome, ${user['first_name']} ${user['last_name']}",
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       if (org != null)
@@ -262,7 +265,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           textStyle: const TextStyle(fontSize: 16),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -280,44 +284,43 @@ class _DriverDashboardState extends State<DriverDashboard> {
                       child: historyProvider.isLoading
                           ? const Center(child: CircularProgressIndicator())
                           : historyProvider.error.isNotEmpty
-                              ? Center(
-                                  child: Text('Error: ${historyProvider.error}'),
-                                )
-                              : visibleInspections.isEmpty
-                                  ? _buildEmptyState(context)
-                                  : RefreshIndicator(
-                                      onRefresh: historyProvider.refresh,
-                                      child: ListView.builder(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 8),
-                                        itemCount: visibleInspections.length,
-                                        itemBuilder: (_, index) {
-                                          final item =
-                                              visibleInspections[index];
-                                          final formattedDate =
-                                              item['updated_at'] != null
-                                                  ? parseUtcToLocal(
-                                                      item['updated_at'])
-                                                  : 'Unknown';
-                                          final driverName = item['driver']
-                                                  ?['full_name'] ??
-                                              'N/A';
-                                          final inspectionType =
-                                              (item['type']
-                                                      ?.toString()
-                                                      .toUpperCase()) ??
-                                                  'N/A';
+                          ? Center(
+                              child: Text('Error: ${historyProvider.error}'),
+                            )
+                          : visibleInspections.isEmpty
+                          ? _buildEmptyState(context)
+                          : RefreshIndicator(
+                              onRefresh: historyProvider.refresh,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                itemCount: visibleInspections.length,
+                                itemBuilder: (_, index) {
+                                  final item = visibleInspections[index];
+                                  final formattedDate =
+                                      item['updated_at'] != null
+                                      ? parseUtcToLocal(item['updated_at'])
+                                      : 'Unknown';
+                                  final driverName =
+                                      item['driver']?['full_name'] ?? 'N/A';
+                                  final inspectionType =
+                                      (item['type']
+                                          ?.toString()
+                                          .toUpperCase()) ??
+                                      'N/A';
 
-                                          return _buildInspectionCard(
-                                            context,
-                                            id: item['id'],
-                                            type: inspectionType,
-                                            driverName: driverName,
-                                            date: formattedDate,
-                                          );
-                                        },
-                                      ),
-                                    ),
+                                  return _buildInspectionCard(
+                                    context,
+                                    id: item['id'],
+                                    type: inspectionType,
+                                    driverName: driverName,
+                                    date: formattedDate,
+                                  );
+                                },
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -362,17 +365,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Driver: $driverName'),
-            Text('Date: $date'),
-          ],
+          children: [Text('Driver: $driverName'), Text('Date: $date')],
         ),
         trailing: Text(
           type,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: iconColor,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: iconColor),
         ),
         onTap: () {
           HapticFeedback.lightImpact();
@@ -392,8 +389,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inventory_2_outlined,
-              size: 72, color: Theme.of(context).disabledColor),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 72,
+            color: Theme.of(context).disabledColor,
+          ),
           const SizedBox(height: 12),
           Text(
             'No inspections yet',
@@ -434,21 +434,42 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _initializeAdmin();
       if (!WalkthroughService.hasSeenAdminWalkthrough()) {
-        await Future.delayed(const Duration(milliseconds: 250));
-        _showcaseKey.currentState?.startShowCase([
-          _drawerKey,
-          _themeKey,
-          _logoutKey,
-          _inviteDriverKey,
-          _viewInspectionsKey,
-          _dismissUserKey,
-        ]);
-        await WalkthroughService.markAdminWalkthroughSeen();
+        // Wait until UI fully builds and all keys are mounted
+        Future.delayed(const Duration(milliseconds: 700), () {
+          _safeStartWalkthrough();
+        });
       }
     });
+  }
+
+  void _safeStartWalkthrough() {
+    // Prevent double starts
+    if (_showcaseKey.currentState == null) return;
+
+    // Ensure all showcase targets exist
+    final allKeys = [
+      _drawerKey,
+      _themeKey,
+      _logoutKey,
+      _inviteDriverKey,
+      _viewInspectionsKey,
+      _dismissUserKey,
+    ];
+
+    // Check if all keys have built contexts
+    final allMounted = allKeys.every((key) => key.currentContext != null);
+
+    if (allMounted) {
+      _showcaseKey.currentState!.startShowCase(allKeys);
+      WalkthroughService.markAdminWalkthroughSeen();
+    } else {
+      // Retry once more after a short delay if not yet ready
+      Future.delayed(const Duration(milliseconds: 400), _safeStartWalkthrough);
+    }
   }
 
   Future<void> _initializeAdmin() async {
@@ -491,7 +512,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     final socket = IO.io(
       ApiConfig.baseUrl,
-      IO.OptionBuilder().setTransports(['websocket']).enableAutoConnect().build(),
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .enableAutoConnect()
+          .build(),
     );
 
     socket.connect();
@@ -559,9 +583,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
 
     if (!userHasOrg) {
-      return Scaffold(
-        body: _buildEmptyOrgState(context),
-      );
+      return Scaffold(body: _buildEmptyOrgState(context));
     }
 
     return ShowCaseWidget(
@@ -569,14 +591,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context) => Scaffold(
         drawer: AdminDrawerWidget(
           onResetWalkthrough: () {
-            _showcaseKey.currentState?.startShowCase([
+            final steps = [
               _drawerKey,
               _themeKey,
               _logoutKey,
               _inviteDriverKey,
               _viewInspectionsKey,
-              _dismissUserKey,
-            ]);
+            ];
+
+            // Only include the dismiss user step if there are drivers
+            if (_users.length > 1) {
+              steps.add(_dismissUserKey);
+            }
+
+            _showcaseKey.currentState?.startShowCase(steps);
           },
         ),
         appBar: AppBar(
@@ -669,7 +697,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           textStyle: const TextStyle(fontSize: 16),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -682,68 +711,67 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: _loading
                         ? const Center(child: CircularProgressIndicator())
                         : _users.isEmpty
-                            ? _buildEmptyUsers(context)
-                            : ListView.builder(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                itemCount: _users.length,
-                                itemBuilder: (context, index) {
-                                  final user = _users[index];
-                                  final isAdmin = user['role'] == 'admin';
-                                  final card = _buildUserCard(context, user);
+                        ? _buildEmptyUsers(context)
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: _users.length,
+                            itemBuilder: (context, index) {
+                              final user = _users[index];
+                              final isAdmin = user['role'] == 'admin';
+                              final card = _buildUserCard(context, user);
 
-                                  if (isAdmin) return card;
+                              if (isAdmin) return card;
 
-                                  return Showcase(
-                                    key: _dismissUserKey,
-                                    description:
-                                        "Swipe left to remove a driver",
-                                    disposeOnTap: true,
-                                    onTargetClick: () {},
-                                    child: Dismissible(
-                                      key: ValueKey(user['id']),
-                                      direction: DismissDirection.endToStart,
-                                      background: Container(
-                                        alignment: Alignment.centerRight,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        color: Colors.red,
-                                        child: const Icon(Icons.delete,
-                                            color: Colors.white),
-                                      ),
-                                      confirmDismiss: (_) async {
-                                        return await showDialog(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title:
-                                                const Text("Remove driver?"),
-                                            content: Text(
-                                              "Are you sure you want to remove ${user['first_name']} ${user['last_name']} from your org?",
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(context)
-                                                        .pop(false),
-                                                child: const Text("Cancel"),
-                                              ),
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(context)
-                                                        .pop(true),
-                                                child: const Text("Remove"),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      onDismissed: (_) =>
-                                          _removeUser(context, user),
-                                      child: card,
+                              return Showcase(
+                                key: _dismissUserKey,
+                                description: "Swipe left to remove a driver",
+                                disposeOnTap: true,
+                                onTargetClick: () {},
+                                child: Dismissible(
+                                  key: ValueKey(user['id']),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
                                     ),
-                                  );
-                                },
-                              ),
+                                    color: Colors.red,
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  confirmDismiss: (_) async {
+                                    return await showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text("Remove driver?"),
+                                        content: Text(
+                                          "Are you sure you want to remove ${user['first_name']} ${user['last_name']} from your org?",
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(
+                                              context,
+                                            ).pop(false),
+                                            child: const Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(true),
+                                            child: const Text("Remove"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  onDismissed: (_) =>
+                                      _removeUser(context, user),
+                                  child: card,
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ),
               ],
@@ -761,25 +789,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Column(
         children: [
-          Icon(Icons.business_center_outlined,
-              size: 56, color: Theme.of(context).colorScheme.primary),
+          Icon(
+            Icons.business_center_outlined,
+            size: 56,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: 8),
           Text(
             org['name'] ?? 'Organization',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           if (org['address']?.isNotEmpty ?? false)
-            Text(org['address'],
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(org['address'], style: Theme.of(context).textTheme.bodyMedium),
           if (org['contact_name']?.isNotEmpty ?? false)
-            Text('Contact: ${org['contact_name']}',
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Contact: ${org['contact_name']}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           if (org['phone_number']?.isNotEmpty ?? false)
-            Text('Phone: ${org['phone_number']}',
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Phone: ${org['phone_number']}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
         ],
       ),
     );
@@ -812,10 +845,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           '${user["first_name"]} ${user["last_name"]}${isAdmin ? " (Admin)" : ""}',
           style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
-        subtitle: Text(
-          user["email"] ?? "",
-          style: TextStyle(color: textColor),
-        ),
+        subtitle: Text(user["email"] ?? "", style: TextStyle(color: textColor)),
       ),
     );
   }
@@ -825,8 +855,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline,
-              size: 72, color: Theme.of(context).disabledColor),
+          Icon(
+            Icons.people_outline,
+            size: 72,
+            color: Theme.of(context).disabledColor,
+          ),
           const SizedBox(height: 12),
           Text(
             'No drivers yet',
@@ -842,8 +875,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.apartment_outlined,
-              size: 72, color: Theme.of(context).colorScheme.primary),
+          Icon(
+            Icons.apartment_outlined,
+            size: 72,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: 12),
           const Text(
             'You are not part of any organization.',
@@ -866,7 +902,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Future<void> _removeUser(BuildContext context, Map<String, dynamic> user) async {
+  Future<void> _removeUser(
+    BuildContext context,
+    Map<String, dynamic> user,
+  ) async {
     final removedUser = user;
     try {
       final auth = context.read<AuthProvider>();
@@ -874,14 +913,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
       if (!mounted) return;
       setState(() => _users.removeWhere((u) => u['id'] == removedUser['id']));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${removedUser['first_name']} removed from org")),
+        SnackBar(
+          content: Text("${removedUser['first_name']} removed from org"),
+        ),
       );
       HapticFeedback.lightImpact();
     } catch (e) {
       if (!mounted) return;
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to remove ${removedUser['first_name']}: $e")),
+        SnackBar(
+          content: Text("Failed to remove ${removedUser['first_name']}: $e"),
+        ),
       );
     }
   }
