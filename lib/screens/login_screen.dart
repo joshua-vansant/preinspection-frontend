@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/ui_helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/password_reset_widget.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,11 +22,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final phoneController = TextEditingController();
+  final resetEmailController = TextEditingController();
 
   bool isRegistering = false;
+  bool isResettingPassword = false;
   bool _rememberMe = false;
   bool _loading = false;
   bool _obscurePassword = true;
+
+  String? resetMessage;
 
   @override
   void initState() {
@@ -129,6 +134,31 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handlePasswordResetRequest() async {
+    setState(() {
+      _loading = true;
+      resetMessage = null;
+    });
+
+    try {
+      final response = await AuthService.requestPasswordReset(
+        resetEmailController.text.trim(),
+      );
+
+      if (response['error'] != null) {
+        resetMessage = response['error'];
+      } else {
+        resetMessage = "If an account exists, a reset link has been sent.";
+      }
+    } catch (e) {
+      resetMessage = "Failed to request password reset: $e";
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -168,25 +198,38 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLoginFields() => Column(
-    key: const ValueKey('login_fields'),
-    children: [
-      _buildTextField(
-        controller: emailController,
-        label: "Email",
-        type: TextInputType.emailAddress,
-        autofillHints: const [AutofillHints.email],
+Widget _buildLoginFields() => Column(
+  key: const ValueKey('login_fields'),
+  children: [
+    _buildTextField(
+      controller: emailController,
+      label: "Email",
+      type: TextInputType.emailAddress,
+      autofillHints: const [AutofillHints.email],
+    ),
+    const SizedBox(height: 12),
+    _buildTextField(
+      controller: passwordController,
+      label: "Password",
+      obscure: true,
+      action: TextInputAction.done,
+      autofillHints: const [AutofillHints.password],
+    ),
+    const SizedBox(height: 8),
+    Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: () {
+          setState(() {
+            isResettingPassword = true;
+          });
+        },
+        child: const Text("Forgot Password?"),
       ),
-      const SizedBox(height: 12),
-      _buildTextField(
-        controller: passwordController,
-        label: "Password",
-        obscure: true,
-        action: TextInputAction.done,
-        autofillHints: const [AutofillHints.password],
-      ),
-    ],
-  );
+    ),
+  ],
+);
+
 
   Widget _buildRegisterFields() => Column(
     key: const ValueKey('register_fields'),
@@ -265,11 +308,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         duration: const Duration(milliseconds: 300),
                         transitionBuilder: (child, anim) =>
                             FadeTransition(opacity: anim, child: child),
-                        child: isRegistering
+                        child: isResettingPassword
+                            ? PasswordResetWidget(
+                                onBack: () {
+                                  setState(() => isResettingPassword = false);
+                                },
+                              )
+                            : isRegistering
                             ? _buildRegisterFields()
                             : _buildLoginFields(),
                       ),
                       const SizedBox(height: 20),
+                     if(!isResettingPassword)
                       _loading
                           ? const CircularProgressIndicator()
                           : Column(

@@ -105,4 +105,45 @@ class AuthService {
       // ignore network errors on logout
     }
   }
+
+  static Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/auth/request-password-reset');
+    final res = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email}),
+    );
+
+    return json.decode(res.body);
+  }
+
+    static Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/auth/reset-password'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'token': token,
+          'new_password': newPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'error': 'Failed to reset password: ${response.statusCode}',
+          'details': jsonDecode(response.body)
+        };
+      }
+    } catch (e) {
+      return {'error': 'Exception during password reset: $e'};
+    }
+  }
+
 }
