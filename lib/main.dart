@@ -16,6 +16,7 @@ import 'package:showcaseview/showcaseview.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
 import 'screens/reset_password_screen.dart';
+import 'screens/splash_screen.dart';
 
 // Global camera list
 late final List<CameraDescription> cameras;
@@ -29,7 +30,6 @@ Future<void> main() async {
 
   // Initialize cameras
   cameras = await availableCameras();
-
   await WalkthroughService.init();
 
   runApp(
@@ -80,18 +80,12 @@ class _RootAppState extends State<RootApp> {
 
     // Listen for links while app is running (foreground or background)
     _sub = _appLinks.uriLinkStream.listen(
-      (Uri uri) {
-        _handleUri(uri);
-      },
-      onError: (err) {
-        print('Error handling URI: $err');
-      },
+      (Uri uri) => _handleUri(uri),
+      onError: (err) => print('Error handling URI: $err'),
     );
 
     try {
       final initialUri = await _appLinks.getInitialLink();
-      print('📥 Initial link received: $initialUri');
-
       if (initialUri != null) {
         _handleUri(initialUri);
       }
@@ -110,10 +104,10 @@ class _RootAppState extends State<RootApp> {
 
     String? token;
 
+    // Match both your HTTPS and custom schemes
     if (uri.scheme == 'https' &&
         uri.host == 'preinspection-api.onrender.com' &&
-        (uri.path == '/auth/deep-reset' ||
-            uri.path == '/auth/reset-password')) {
+        (uri.path == '/auth/deep-reset' || uri.path == '/auth/reset-password')) {
       token = uri.queryParameters['token'];
       print('🧩 Extracted token from HTTPS: $token');
     } else if (uri.scheme == 'drivecheck' && uri.host == 'reset-password') {
@@ -125,13 +119,11 @@ class _RootAppState extends State<RootApp> {
     }
 
     if (token != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        print('Navigating to ResetPasswordScreen via navigatorKey...');
-        await Future.delayed(const Duration(milliseconds: 300));
-
-
-        navigatorKey.currentState?.push(
+      // Use navigatorKey safely here
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => ResetPasswordScreen(token: token!)),
+          (route) => false,
         );
       });
     }
@@ -153,11 +145,12 @@ class _RootAppState extends State<RootApp> {
       navigatorKey: navigatorKey,
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode:
+          themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: authProvider.isLoggedIn
-          ? const DashboardScreen()
-          : const LoginScreen(),
+
+      /// 🟩 Start at the splash screen — it'll decide if we go to login, dashboard, or deep link.
+      home: const SplashScreen(),
     );
   }
 }
